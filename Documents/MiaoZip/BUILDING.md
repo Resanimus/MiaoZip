@@ -20,7 +20,7 @@
 
 依赖已还原时可以加 `-SkipRestore`。脚本构建 Release x64，固定 MiaoZip 版本为 1.0.0.0，并生成未签名 MSIX。结果位于 `Output/Binaries/AppPackages/`；本次发布运行包从其中的 x64 MSIX 提取运行文件，并附带许可、说明和 ICO。
 
-`BuildAllTargets.bat` 为保留的上游多目标构建入口，MiaoZip v1.0 使用上面的专用脚本。
+`BuildAllTargets.cmd` 为保留的上游多目标构建入口，MiaoZip v1.0 使用上面的专用脚本。
 
 ## 测试
 
