@@ -1,0 +1,12 @@
+{
+  "version": "1.0",
+  "components": [
+    "Microsoft.VisualStudio.Workload.VCTools",
+    "Microsoft.VisualStudio.Workload.UniversalBuildTools",
+    "Microsoft.VisualStudio.Component.VC.ATL",
+    "Microsoft.VisualStudio.Component.Windows11SDK.26100",
+    "Microsoft.VisualStudio.ComponentGroup.MSIX.Packaging",
+    "Microsoft.NetCore.Component.SDK",
+    "Microsoft.VisualStudio.Component.VC.Tools.x86.x64"
+  ]
+}

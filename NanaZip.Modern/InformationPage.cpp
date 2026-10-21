@@ -1,0 +1,63 @@
+﻿#include "pch.h"
+#include "InformationPage.h"
+#include "GlassTheme.h"
+#if __has_include("InformationPage.g.cpp")
+#include "InformationPage.g.cpp"
+#endif
+
+#include <winrt/Windows.ApplicationModel.DataTransfer.h>
+
+namespace winrt
+{
+    using Windows::ApplicationModel::DataTransfer::Clipboard;
+    using Windows::ApplicationModel::DataTransfer::DataPackage;
+}
+
+namespace winrt::NanaZip::Modern::implementation
+{
+    InformationPage::InformationPage(
+        _In_opt_ HWND WindowHandle,
+        _In_opt_ LPCWSTR Title,
+        _In_opt_ LPCWSTR Content) :
+        m_WindowHandle(WindowHandle),
+        m_Title(Title),
+        m_Content(Content)
+    {
+    }
+
+    void InformationPage::InitializeComponent()
+    {
+        InformationPageT::InitializeComponent();
+        ApplyMiaoZipXamlTheme(*this);
+
+        ::SetWindowTextW(this->m_WindowHandle, this->m_Title.c_str());
+        
+        this->TitleTextBlock().Text(this->m_Title);
+        this->InformationTextBox().Text(this->m_Content);
+    }
+
+    void InformationPage::InformationTextBoxCopyingToClipboardHandler(
+        winrt::TextBox const& sender,
+        winrt::TextControlCopyingToClipboardEventArgs const& args)
+    {
+        winrt::hstring SelectedText = sender.SelectedText();
+        if (!SelectedText.empty())
+        {
+            winrt::DataPackage Package;
+            Package.SetText(SelectedText);
+            winrt::Clipboard::SetContent(Package);
+            winrt::Clipboard::Flush();
+            args.Handled(true);
+        }
+    }
+
+    void InformationPage::CloseButtonClickedHandler(
+        winrt::IInspectable const& sender,
+        winrt::RoutedEventArgs const& args)
+    {
+        UNREFERENCED_PARAMETER(sender);
+        UNREFERENCED_PARAMETER(args);
+
+		::PostMessageW(this->m_WindowHandle, WM_CLOSE, 0, 0);
+    }
+}

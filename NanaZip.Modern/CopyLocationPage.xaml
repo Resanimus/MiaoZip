@@ -1,0 +1,105 @@
+﻿<Page
+  x:Class="NanaZip.Modern.CopyLocationPage"
+  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+  xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+  xmlns:local="using:NanaZip.Modern"
+  xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+  FontSize="14"
+  Foreground="{ThemeResource MiaoTextBrush}"
+  mc:Ignorable="d">
+
+  <Grid Background="{ThemeResource MiaoChromeBrush}">
+    <Grid.RowDefinitions>
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="*" />
+      <RowDefinition Height="Auto" />
+    </Grid.RowDefinitions>
+
+    <Grid.ColumnDefinitions>
+      <ColumnDefinition Width="*" />
+      <ColumnDefinition Width="Auto" />
+    </Grid.ColumnDefinitions>
+
+    <TextBlock
+      x:Name="TitleTextBlock"
+      Grid.ColumnSpan="2"
+      Margin="16,0"
+      d:Text="[Copy]"
+      FontSize="22"
+      Style="{ThemeResource BaseTextBlockStyle}"
+      TextTrimming="CharacterEllipsis"
+      TextWrapping="NoWrap" />
+
+    <TextBlock
+      x:Name="SubtitleTextBlock"
+      Grid.Row="1"
+      Grid.ColumnSpan="2"
+      Margin="16,4"
+      d:Text="[Copy to:]" />
+
+    <TextBox
+      x:Name="PathTextBox"
+      Grid.Row="2"
+      Margin="16,0,4,0" />
+    <Button
+      Grid.Row="2"
+      Grid.Column="1"
+      Margin="0,0,16,0"
+      Click="BrowseButtonClick"
+      Content="..." />
+
+    <StackPanel Grid.Row="3" Grid.ColumnSpan="2" Margin="16,4,16,0" Spacing="6">
+      <CheckBox x:Name="OrganizeOuterFolderCheck" Content="自动整理外层文件夹"
+        ToolTipService.ToolTip="只有一个顶层项目时保留原结构；多个顶层项目时按压缩包名创建文件夹。" />
+    <TextBlock
+      x:Name="AdditionalInformationTextBlock"
+      Margin="0"
+      d:Text="Files: 1" />
+    </StackPanel>
+
+    <Grid
+      Grid.Row="4"
+      Grid.ColumnSpan="2"
+      Background="{ThemeResource MiaoFieldBrush}"
+      BorderBrush="{ThemeResource MiaoLineBrush}"
+      BorderThickness="0,1,0,0">
+      <Grid
+        Grid.Column="1"
+        Padding="12,0,12,0">
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="Auto" />
+          <ColumnDefinition Width="*" />
+          <ColumnDefinition Width="Auto" />
+          <ColumnDefinition Width="Auto" />
+        </Grid.ColumnDefinitions>
+
+        <Button
+          x:Name="ExtractAllButton"
+          x:Uid="/NanaZip.Modern/CopyLocationPage/ExtractAllButton"
+          Width="120"
+          Margin="4,16,0,16"
+          Click="ExtractAllButtonClick"
+          Content="[Extract all...]" />
+
+        <Button
+          Grid.Column="2"
+          x:Name="PauseButton"
+          x:Uid="/NanaZip.Modern/Common/OKButton"
+          Width="120"
+          Margin="0,16,4,16"
+          Click="OkButtonClick"
+          Content="[OK]" />
+        <Button
+          Grid.Column="3"
+          x:Uid="/NanaZip.Modern/Common/CancelButton"
+          Width="120"
+          Margin="4,16,4,16"
+          Click="CancelButtonClick"
+          Content="[Cancel]" />
+      </Grid>
+    </Grid>
+  </Grid>
+</Page>

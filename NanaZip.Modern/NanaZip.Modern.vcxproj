@@ -1,0 +1,493 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{1AB11057-1F48-44D2-A913-C945BFC1AA93}</ProjectGuid>
+    <RootNamespace>NanaZip.Modern</RootNamespace>
+    <MileProjectType>DynamicLibrary</MileProjectType>
+    <MileProjectManifestFile>NanaZip.Modern.manifest</MileProjectManifestFile>
+    <MinimalCoreWin>false</MinimalCoreWin>
+    <DefaultLanguage>en</DefaultLanguage>
+    <AppContainerApplication>false</AppContainerApplication>
+    <ApplicationType>Windows Store</ApplicationType>
+    <ApplicationTypeRevision>10.0</ApplicationTypeRevision>
+    <XamlComponentResourceLocation>nested</XamlComponentResourceLocation>
+    <WindowsTargetPlatformMinVersion>10.0.19041.0</WindowsTargetPlatformMinVersion>
+    <MileProjectEnableCppWinRTSupport>true</MileProjectEnableCppWinRTSupport>
+    <MileProjectUseProjectProperties>true</MileProjectUseProjectProperties>
+    <MileProjectCompanyName>M2-Team</MileProjectCompanyName>
+    <MileProjectFileDescription>NanaZip Modern Experience</MileProjectFileDescription>
+    <MileProjectInternalName>NanaZip.Modern</MileProjectInternalName>
+    <MileProjectLegalCopyright>© M2-Team and Contributors. All rights reserved.</MileProjectLegalCopyright>
+    <MileProjectOriginalFilename>NanaZip.Modern.dll</MileProjectOriginalFilename>
+    <MileProjectProductName>NanaZip</MileProjectProductName>
+  </PropertyGroup>
+  <Import Project="..\NanaZip.Project\NanaZip.Project.props" />
+  <Import Sdk="Mile.Project.Configurations" Project="Mile.Project.Platform.x64.props" />
+  <Import Sdk="Mile.Project.Configurations" Project="Mile.Project.Platform.ARM64.props" />
+  <Import Sdk="Mile.Project.Configurations" Project="Mile.Project.Cpp.Default.props" />
+  <Import Sdk="Mile.Project.Configurations" Project="Mile.Project.Cpp.props" />
+  <Import Project="..\NanaZip.Project\NanaZip.Project.Runtime.props" />
+  <!-- Use only the explicit theme scope; XAML keeps its own message handling. -->
+  <PropertyGroup><K7UserDisableRedirector>true</K7UserDisableRedirector></PropertyGroup>
+  <Import Project="..\K7User\K7User.props" />
+  <PropertyGroup>
+    <RequiredBundles>Microsoft.VisualStudio.ComponentGroup.MSIX.Packaging</RequiredBundles>
+  </PropertyGroup>
+  <ItemDefinitionGroup>
+    <Link>
+      <ModuleDefinitionFile>NanaZip.Modern.def</ModuleDefinitionFile>
+      <LargeAddressAware>true</LargeAddressAware>
+      <MinimumRequiredVersion>10.0</MinimumRequiredVersion>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <PreprocessorDefinitions>WINRT_NO_SOURCE_LOCATION;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>runtimeobject.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <None Include="NanaZip.Modern.def" />
+    <None Include="NanaZip.Modern.props" />
+    <None Include="NanaZip.Modern.Wrapper.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <Manifest Include="NanaZip.Modern.manifest" />
+  </ItemGroup>
+  <ItemGroup>
+    <ApplicationDefinition Include="App.xaml">
+      <SubType>Designer</SubType>
+    </ApplicationDefinition>
+    <Page Include="GlassTheme.xaml" />
+    <Page Include="AddressBarTemplate.xaml" />
+    <Page Include="CopyLocationPage.xaml">
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="InformationPage.xaml">
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="ProgressPage.xaml">
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="SponsorPage.xaml">
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="AboutPage.xaml">
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="MainWindowToolBarPage.xaml">
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="StatusBarTemplate.xaml">
+      <SubType>Designer</SubType>
+    </Page>
+  </ItemGroup>
+  <ItemGroup>
+    <Midl Include="AddressBar.idl" />
+    <Midl Include="AddressBarTemplate.idl">
+      <DependentUpon>AddressBarTemplate.xaml</DependentUpon>
+    </Midl>
+    <Midl Include="App.idl">
+      <DependentUpon>App.xaml</DependentUpon>
+    </Midl>
+    <Midl Include="CopyLocationPage.idl">
+      <DependentUpon>CopyLocationPage.xaml</DependentUpon>
+      <SubType>Code</SubType>
+    </Midl>
+    <Midl Include="InformationPage.idl">
+      <DependentUpon>InformationPage.xaml</DependentUpon>
+      <SubType>Code</SubType>
+    </Midl>
+    <Midl Include="ProgressPage.idl">
+      <DependentUpon>ProgressPage.xaml</DependentUpon>
+      <SubType>Code</SubType>
+    </Midl>
+    <Midl Include="SponsorPage.idl">
+      <DependentUpon>SponsorPage.xaml</DependentUpon>
+      <SubType>Code</SubType>
+    </Midl>
+    <Midl Include="AboutPage.idl">
+      <DependentUpon>AboutPage.xaml</DependentUpon>
+      <SubType>Code</SubType>
+    </Midl>
+    <Midl Include="MainWindowToolBarPage.idl">
+      <DependentUpon>MainWindowToolBarPage.xaml</DependentUpon>
+      <SubType>Code</SubType>
+    </Midl>
+    <Midl Include="StatusBar.idl" />
+    <Midl Include="StatusBarTemplate.idl">
+      <DependentUpon>StatusBarTemplate.xaml</DependentUpon>
+      <SubType>Code</SubType>
+    </Midl>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="AddressBar.h">
+      <DependentUpon>AddressBar.idl</DependentUpon>
+    </ClInclude>
+    <ClInclude Include="AddressBarTemplate.h">
+      <DependentUpon>AddressBarTemplate.xaml</DependentUpon>
+    </ClInclude>
+    <ClInclude Include="ControlMacros.h" />
+    <ClInclude Include="CopyLocationPage.h">
+      <DependentUpon>CopyLocationPage.xaml</DependentUpon>
+      <SubType>Code</SubType>
+    </ClInclude>
+    <ClInclude Include="InformationPage.h">
+      <DependentUpon>InformationPage.xaml</DependentUpon>
+      <SubType>Code</SubType>
+    </ClInclude>
+    <ClInclude Include="NanaZip.Modern.h" />
+    <ClInclude Include="pch.h" />
+    <ClInclude Include="App.h">
+      <DependentUpon>App.xaml</DependentUpon>
+    </ClInclude>
+    <ClInclude Include="ProgressPage.h">
+      <DependentUpon>ProgressPage.xaml</DependentUpon>
+      <SubType>Code</SubType>
+    </ClInclude>
+    <ClInclude Include="SponsorPage.h">
+      <DependentUpon>SponsorPage.xaml</DependentUpon>
+      <SubType>Code</SubType>
+    </ClInclude>
+    <ClInclude Include="AboutPage.h">
+      <DependentUpon>AboutPage.xaml</DependentUpon>
+      <SubType>Code</SubType>
+    </ClInclude>
+    <ClInclude Include="MainWindowToolBarPage.h">
+      <DependentUpon>MainWindowToolBarPage.xaml</DependentUpon>
+      <SubType>Code</SubType>
+    </ClInclude>
+    <ClInclude Include="StatusBar.h">
+      <DependentUpon>StatusBar.idl</DependentUpon>
+      <SubType>Code</SubType>
+    </ClInclude>
+    <ClInclude Include="StatusBarTemplate.h">
+      <DependentUpon>StatusBarTemplate.xaml</DependentUpon>
+      <SubType>Code</SubType>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="AddressBarTemplate.cpp">
+      <DependentUpon>AddressBarTemplate.xaml</DependentUpon>
+    </ClCompile>
+    <ClCompile Include="CopyLocationPage.cpp">
+      <DependentUpon>CopyLocationPage.xaml</DependentUpon>
+      <SubType>Code</SubType>
+    </ClCompile>
+    <ClCompile Include="InformationPage.cpp">
+      <DependentUpon>InformationPage.xaml</DependentUpon>
+      <SubType>Code</SubType>
+    </ClCompile>
+    <ClCompile Include="pch.cpp" />
+    <ClCompile Include="$(GeneratedFilesDir)module.g.cpp" />
+    <ClCompile Include="App.cpp">
+      <DependentUpon>App.xaml</DependentUpon>
+    </ClCompile>
+    <ClCompile Include="ProgressPage.cpp">
+      <DependentUpon>ProgressPage.xaml</DependentUpon>
+      <SubType>Code</SubType>
+    </ClCompile>
+    <ClCompile Include="SponsorPage.cpp">
+      <DependentUpon>SponsorPage.xaml</DependentUpon>
+      <SubType>Code</SubType>
+    </ClCompile>
+    <ClCompile Include="AboutPage.cpp">
+      <DependentUpon>AboutPage.xaml</DependentUpon>
+      <SubType>Code</SubType>
+    </ClCompile>
+    <ClCompile Include="MainWindowToolBarPage.cpp">
+      <DependentUpon>MainWindowToolBarPage.xaml</DependentUpon>
+      <SubType>Code</SubType>
+    </ClCompile>
+    <ClCompile Include="AddressBar.cpp">
+      <DependentUpon>AddressBar.idl</DependentUpon>
+    </ClCompile>
+    <ClCompile Include="NanaZip.Modern.cpp" />
+    <ClCompile Include="StatusBar.cpp">
+      <DependentUpon>StatusBar.idl</DependentUpon>
+      <SubType>Code</SubType>
+    </ClCompile>
+    <ClCompile Include="StatusBarTemplate.cpp">
+      <DependentUpon>StatusBarTemplate.xaml</DependentUpon>
+      <SubType>Code</SubType>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Mile.Xaml">
+      <Version>2.5.1616</Version>
+    </PackageReference>
+    <PackageReference Include="Mile.Windows.Helpers">
+      <Version>1.0.1171</Version>
+    </PackageReference>
+    <PackageReference Include="Mile.Windows.UniCrt">
+      <Version>1.2.410</Version>
+    </PackageReference>
+  </ItemGroup>
+  <ItemGroup>
+    <PRIResource Include="Strings\af\Common.resw" />
+    <PRIResource Include="Strings\af\CopyLocationPage.resw" />
+    <PRIResource Include="Strings\af\ProgressPage.resw" />
+    <PRIResource Include="Strings\ar\Common.resw" />
+    <PRIResource Include="Strings\ar\CopyLocationPage.resw" />
+    <PRIResource Include="Strings\ar\ProgressPage.resw" />
+    <PRIResource Include="Strings\az-arab\Common.resw" />
+    <PRIResource Include="Strings\az-arab\CopyLocationPage.resw" />
+    <PRIResource Include="Strings\az-arab\ProgressPage.resw" />
+    <PRIResource Include="Strings\be\Common.resw" />
+    <PRIResource Include="Strings\be\CopyLocationPage.resw" />
+    <PRIResource Include="Strings\be\ProgressPage.resw" />
+    <PRIResource Include="Strings\bg\Common.resw" />
+    <PRIResource Include="Strings\bg\CopyLocationPage.resw" />
+    <PRIResource Include="Strings\bg\ProgressPage.resw" />
+    <PRIResource Include="Strings\bn\Common.resw" />
+    <PRIResource Include="Strings\bn\CopyLocationPage.resw" />
+    <PRIResource Include="Strings\bn\ProgressPage.resw" />
+    <PRIResource Include="Strings\ca-es-valencia\Common.resw" />
+    <PRIResource Include="Strings\ca-es-valencia\CopyLocationPage.resw" />
+    <PRIResource Include="Strings\ca-es-valencia\ProgressPage.resw" />
+    <PRIResource Include="Strings\ca\Common.resw" />
+    <PRIResource Include="Strings\ca\CopyLocationPage.resw" />
+    <PRIResource Include="Strings\ca\ProgressPage.resw" />
+    <PRIResource Include="Strings\cs\Common.resw" />
+    <PRIResource Include="Strings\cs\CopyLocationPage.resw" />
+    <PRIResource Include="Strings\cs\ProgressPage.resw" />
+    <PRIResource Include="Strings\cy\Common.resw" />
+    <PRIResource Include="Strings\cy\CopyLocationPage.resw" />
+    <PRIResource Include="Strings\cy\ProgressPage.resw" />
+    <PRIResource Include="Strings\da\Common.resw" />
+    <PRIResource Include="Strings\da\CopyLocationPage.resw" />
+    <PRIResource Include="Strings\da\ProgressPage.resw" />
+    <PRIResource Include="Strings\de\Common.resw" />
+    <PRIResource Include="Strings\de\CopyLocationPage.resw" />
+    <PRIResource Include="Strings\de\MainWindowToolBarPage.resw" />
+    <PRIResource Include="Strings\de\ProgressPage.resw" />
+    <PRIResource Include="Strings\de\SponsorPage.resw" />
+    <PRIResource Include="Strings\el\Common.resw" />
+    <PRIResource Include="Strings\el\CopyLocationPage.resw" />
+    <PRIResource Include="Strings\el\MainWindowToolBarPage.resw" />
+    <PRIResource Include="Strings\el\ProgressPage.resw" />
+    <PRIResource Include="Strings\el\SponsorPage.resw" />
+    <PRIResource Include="Strings\en\Common.resw" />
+    <PRIResource Include="Strings\en\CopyLocationPage.resw" />
+    <PRIResource Include="Strings\en\MainWindowToolBarPage.resw" />
+    <PRIResource Include="Strings\en\ProgressPage.resw" />
+    <PRIResource Include="Strings\en\SponsorPage.resw" />
+    <PRIResource Include="Strings\eo\Common.resw" />
+    <PRIResource Include="Strings\eo\CopyLocationPage.resw" />
+    <PRIResource Include="Strings\eo\ProgressPage.resw" />
+    <PRIResource Include="Strings\es\Common.resw" />
+    <PRIResource Include="Strings\es\CopyLocationPage.resw" />
+    <PRIResource Include="Strings\es\ProgressPage.resw" />
+    <PRIResource Include="Strings\et\Common.resw" />
+    <PRIResource Include="Strings\et\CopyLocationPage.resw" />
+    <PRIResource Include="Strings\et\ProgressPage.resw" />
+    <PRIResource Include="Strings\eu\Common.resw" />
+    <PRIResource Include="Strings\eu\CopyLocationPage.resw" />
+    <PRIResource Include="Strings\eu\ProgressPage.resw" />
+    <PRIResource Include="Strings\fa\Common.resw" />
+    <PRIResource Include="Strings\fa\CopyLocationPage.resw" />
+    <PRIResource Include="Strings\fa\ProgressPage.resw" />
+    <PRIResource Include="Strings\fi\Common.resw" />
+    <PRIResource Include="Strings\fi\CopyLocationPage.resw" />
+    <PRIResource Include="Strings\fi\ProgressPage.resw" />
+    <PRIResource Include="Strings\fr\Common.resw" />
+    <PRIResource Include="Strings\fr\CopyLocationPage.resw" />
+    <PRIResource Include="Strings\fr\ProgressPage.resw" />
+    <PRIResource Include="Strings\fy\Common.resw" />
+    <PRIResource Include="Strings\fy\CopyLocationPage.resw" />
+    <PRIResource Include="Strings\fy\ProgressPage.resw" />
+    <PRIResource Include="Strings\ga\Common.resw" />
+    <PRIResource Include="Strings\ga\CopyLocationPage.resw" />
+    <PRIResource Include="Strings\ga\ProgressPage.resw" />
+    <PRIResource Include="Strings\gl\Common.resw" />
+    <PRIResource Include="Strings\gl\CopyLocationPage.resw" />
+    <PRIResource Include="Strings\gl\ProgressPage.resw" />
+    <PRIResource Include="Strings\gu\Common.resw" />
+    <PRIResource Include="Strings\gu\CopyLocationPage.resw" />
+    <PRIResource Include="Strings\gu\ProgressPage.resw" />
+    <PRIResource Include="Strings\he\Common.resw" />
+    <PRIResource Include="Strings\he\CopyLocationPage.resw" />
+    <PRIResource Include="Strings\he\ProgressPage.resw" />
+    <PRIResource Include="Strings\hi\Common.resw" />
+    <PRIResource Include="Strings\hi\CopyLocationPage.resw" />
+    <PRIResource Include="Strings\hi\ProgressPage.resw" />
+    <PRIResource Include="Strings\hr\Common.resw" />
+    <PRIResource Include="Strings\hr\CopyLocationPage.resw" />
+    <PRIResource Include="Strings\hr\ProgressPage.resw" />
+    <PRIResource Include="Strings\hu\Common.resw" />
+    <PRIResource Include="Strings\hu\CopyLocationPage.resw" />
+    <PRIResource Include="Strings\hu\MainWindowToolBarPage.resw" />
+    <PRIResource Include="Strings\hu\ProgressPage.resw" />
+    <PRIResource Include="Strings\hu\SponsorPage.resw" />
+    <PRIResource Include="Strings\hy\Common.resw" />
+    <PRIResource Include="Strings\hy\CopyLocationPage.resw" />
+    <PRIResource Include="Strings\hy\ProgressPage.resw" />
+    <PRIResource Include="Strings\id\Common.resw" />
+    <PRIResource Include="Strings\id\CopyLocationPage.resw" />
+    <PRIResource Include="Strings\id\ProgressPage.resw" />
+    <PRIResource Include="Strings\is\Common.resw" />
+    <PRIResource Include="Strings\is\CopyLocationPage.resw" />
+    <PRIResource Include="Strings\is\ProgressPage.resw" />
+    <PRIResource Include="Strings\it\Common.resw" />
+    <PRIResource Include="Strings\it\CopyLocationPage.resw" />
+    <PRIResource Include="Strings\it\ProgressPage.resw" />
+    <PRIResource Include="Strings\ja\Common.resw" />
+    <PRIResource Include="Strings\ja\CopyLocationPage.resw" />
+    <PRIResource Include="Strings\ja\ProgressPage.resw" />
+    <PRIResource Include="Strings\ka\Common.resw" />
+    <PRIResource Include="Strings\ka\CopyLocationPage.resw" />
+    <PRIResource Include="Strings\ka\ProgressPage.resw" />
+    <PRIResource Include="Strings\kk\Common.resw" />
+    <PRIResource Include="Strings\kk\CopyLocationPage.resw" />
+    <PRIResource Include="Strings\kk\ProgressPage.resw" />
+    <PRIResource Include="Strings\ko\Common.resw" />
+    <PRIResource Include="Strings\ko\CopyLocationPage.resw" />
+    <PRIResource Include="Strings\ko\ProgressPage.resw" />
+    <PRIResource Include="Strings\ku-arab\Common.resw" />
+    <PRIResource Include="Strings\ku-arab\CopyLocationPage.resw" />
+    <PRIResource Include="Strings\ku-arab\ProgressPage.resw" />
+    <PRIResource Include="Strings\ky-kg\Common.resw" />
+    <PRIResource Include="Strings\ky-kg\CopyLocationPage.resw" />
+    <PRIResource Include="Strings\ky-kg\ProgressPage.resw" />
+    <PRIResource Include="Strings\lt\Common.resw" />
+    <PRIResource Include="Strings\lt\CopyLocationPage.resw" />
+    <PRIResource Include="Strings\lt\ProgressPage.resw" />
+    <PRIResource Include="Strings\lv\Common.resw" />
+    <PRIResource Include="Strings\lv\CopyLocationPage.resw" />
+    <PRIResource Include="Strings\lv\ProgressPage.resw" />
+    <PRIResource Include="Strings\mk\Common.resw" />
+    <PRIResource Include="Strings\mk\CopyLocationPage.resw" />
+    <PRIResource Include="Strings\mk\ProgressPage.resw" />
+    <PRIResource Include="Strings\mn-cyrl\Common.resw" />
+    <PRIResource Include="Strings\mn-cyrl\CopyLocationPage.resw" />
+    <PRIResource Include="Strings\mn-cyrl\ProgressPage.resw" />
+    <PRIResource Include="Strings\mn-mong\Common.resw" />
+    <PRIResource Include="Strings\mn-mong\CopyLocationPage.resw" />
+    <PRIResource Include="Strings\mn-mong\ProgressPage.resw" />
+    <PRIResource Include="Strings\mr\Common.resw" />
+    <PRIResource Include="Strings\mr\CopyLocationPage.resw" />
+    <PRIResource Include="Strings\mr\ProgressPage.resw" />
+    <PRIResource Include="Strings\ms\Common.resw" />
+    <PRIResource Include="Strings\ms\CopyLocationPage.resw" />
+    <PRIResource Include="Strings\ms\ProgressPage.resw" />
+    <PRIResource Include="Strings\nb\Common.resw" />
+    <PRIResource Include="Strings\nb\CopyLocationPage.resw" />
+    <PRIResource Include="Strings\nb\ProgressPage.resw" />
+    <PRIResource Include="Strings\ne\Common.resw" />
+    <PRIResource Include="Strings\ne\CopyLocationPage.resw" />
+    <PRIResource Include="Strings\ne\ProgressPage.resw" />
+    <PRIResource Include="Strings\nl\Common.resw" />
+    <PRIResource Include="Strings\nl\CopyLocationPage.resw" />
+    <PRIResource Include="Strings\nl\MainWindowToolBarPage.resw" />
+    <PRIResource Include="Strings\nl\ProgressPage.resw" />
+    <PRIResource Include="Strings\nl\SponsorPage.resw" />
+    <PRIResource Include="Strings\nn\Common.resw" />
+    <PRIResource Include="Strings\nn\CopyLocationPage.resw" />
+    <PRIResource Include="Strings\nn\ProgressPage.resw" />
+    <PRIResource Include="Strings\pa-in\Common.resw" />
+    <PRIResource Include="Strings\pa-in\CopyLocationPage.resw" />
+    <PRIResource Include="Strings\pa-in\ProgressPage.resw" />
+    <PRIResource Include="Strings\pl\Common.resw" />
+    <PRIResource Include="Strings\pl\CopyLocationPage.resw" />
+    <PRIResource Include="Strings\pl\MainWindowToolBarPage.resw" />
+    <PRIResource Include="Strings\pl\ProgressPage.resw" />
+    <PRIResource Include="Strings\pl\SponsorPage.resw" />
+    <PRIResource Include="Strings\ps\Common.resw" />
+    <PRIResource Include="Strings\ps\CopyLocationPage.resw" />
+    <PRIResource Include="Strings\ps\ProgressPage.resw" />
+    <PRIResource Include="Strings\pt-br\Common.resw" />
+    <PRIResource Include="Strings\pt-br\CopyLocationPage.resw" />
+    <PRIResource Include="Strings\pt-br\MainWindowToolBarPage.resw" />
+    <PRIResource Include="Strings\pt-br\ProgressPage.resw" />
+    <PRIResource Include="Strings\pt-br\SponsorPage.resw" />
+    <PRIResource Include="Strings\pt\Common.resw" />
+    <PRIResource Include="Strings\pt\CopyLocationPage.resw" />
+    <PRIResource Include="Strings\pt\ProgressPage.resw" />
+    <PRIResource Include="Strings\ro\Common.resw" />
+    <PRIResource Include="Strings\ro\CopyLocationPage.resw" />
+    <PRIResource Include="Strings\ro\ProgressPage.resw" />
+    <PRIResource Include="Strings\ru\Common.resw" />
+    <PRIResource Include="Strings\ru\CopyLocationPage.resw" />
+    <PRIResource Include="Strings\ru\ProgressPage.resw" />
+    <PRIResource Include="Strings\si\Common.resw" />
+    <PRIResource Include="Strings\si\CopyLocationPage.resw" />
+    <PRIResource Include="Strings\si\ProgressPage.resw" />
+    <PRIResource Include="Strings\sk\Common.resw" />
+    <PRIResource Include="Strings\sk\CopyLocationPage.resw" />
+    <PRIResource Include="Strings\sk\ProgressPage.resw" />
+    <PRIResource Include="Strings\sl\Common.resw" />
+    <PRIResource Include="Strings\sl\CopyLocationPage.resw" />
+    <PRIResource Include="Strings\sl\ProgressPage.resw" />
+    <PRIResource Include="Strings\sq\Common.resw" />
+    <PRIResource Include="Strings\sq\CopyLocationPage.resw" />
+    <PRIResource Include="Strings\sq\MainWindowToolBarPage.resw" />
+    <PRIResource Include="Strings\sq\ProgressPage.resw" />
+    <PRIResource Include="Strings\sq\SponsorPage.resw" />
+    <PRIResource Include="Strings\sr-cyrl\Common.resw" />
+    <PRIResource Include="Strings\sr-cyrl\CopyLocationPage.resw" />
+    <PRIResource Include="Strings\sr-cyrl\ProgressPage.resw" />
+    <PRIResource Include="Strings\sr-Latn\Common.resw" />
+    <PRIResource Include="Strings\sr-Latn\CopyLocationPage.resw" />
+    <PRIResource Include="Strings\sr-Latn\ProgressPage.resw" />
+    <PRIResource Include="Strings\sv\Common.resw" />
+    <PRIResource Include="Strings\sv\CopyLocationPage.resw" />
+    <PRIResource Include="Strings\sv\ProgressPage.resw" />
+    <PRIResource Include="Strings\sw\Common.resw" />
+    <PRIResource Include="Strings\sw\CopyLocationPage.resw" />
+    <PRIResource Include="Strings\sw\ProgressPage.resw" />
+    <PRIResource Include="Strings\ta\Common.resw" />
+    <PRIResource Include="Strings\ta\CopyLocationPage.resw" />
+    <PRIResource Include="Strings\ta\ProgressPage.resw" />
+    <PRIResource Include="Strings\tg-arab\Common.resw" />
+    <PRIResource Include="Strings\tg-arab\CopyLocationPage.resw" />
+    <PRIResource Include="Strings\tg-arab\ProgressPage.resw" />
+    <PRIResource Include="Strings\th\Common.resw" />
+    <PRIResource Include="Strings\th\CopyLocationPage.resw" />
+    <PRIResource Include="Strings\th\ProgressPage.resw" />
+    <PRIResource Include="Strings\tk-cyrl\Common.resw" />
+    <PRIResource Include="Strings\tk-cyrl\CopyLocationPage.resw" />
+    <PRIResource Include="Strings\tk-cyrl\ProgressPage.resw" />
+    <PRIResource Include="Strings\tr\Common.resw" />
+    <PRIResource Include="Strings\tr\CopyLocationPage.resw" />
+    <PRIResource Include="Strings\tr\ProgressPage.resw" />
+    <PRIResource Include="Strings\tt-arab\Common.resw" />
+    <PRIResource Include="Strings\tt-arab\CopyLocationPage.resw" />
+    <PRIResource Include="Strings\tt-arab\ProgressPage.resw" />
+    <PRIResource Include="Strings\ug-arab\Common.resw" />
+    <PRIResource Include="Strings\ug-arab\CopyLocationPage.resw" />
+    <PRIResource Include="Strings\ug-arab\ProgressPage.resw" />
+    <PRIResource Include="Strings\uk\Common.resw" />
+    <PRIResource Include="Strings\uk\CopyLocationPage.resw" />
+    <PRIResource Include="Strings\uk\ProgressPage.resw" />
+    <PRIResource Include="Strings\uz-cyrl\Common.resw" />
+    <PRIResource Include="Strings\uz-cyrl\CopyLocationPage.resw" />
+    <PRIResource Include="Strings\uz-cyrl\ProgressPage.resw" />
+    <PRIResource Include="Strings\uz-latn\Common.resw" />
+    <PRIResource Include="Strings\uz-latn\CopyLocationPage.resw" />
+    <PRIResource Include="Strings\uz-latn\ProgressPage.resw" />
+    <PRIResource Include="Strings\vi\Common.resw" />
+    <PRIResource Include="Strings\vi\CopyLocationPage.resw" />
+    <PRIResource Include="Strings\vi\ProgressPage.resw" />
+    <PRIResource Include="Strings\yo-latn\Common.resw" />
+    <PRIResource Include="Strings\yo-latn\CopyLocationPage.resw" />
+    <PRIResource Include="Strings\yo-latn\ProgressPage.resw" />
+    <PRIResource Include="Strings\zh-Hans\Common.resw" />
+    <PRIResource Include="Strings\zh-Hans\CopyLocationPage.resw" />
+    <PRIResource Include="Strings\zh-Hans\MainWindowToolBarPage.resw" />
+    <PRIResource Include="Strings\zh-Hans\ProgressPage.resw" />
+    <PRIResource Include="Strings\zh-Hans\SponsorPage.resw" />
+    <PRIResource Include="Strings\zh-Hant\Common.resw" />
+    <PRIResource Include="Strings\zh-Hant\CopyLocationPage.resw" />
+    <PRIResource Include="Strings\zh-Hant\ProgressPage.resw" />
+  </ItemGroup>
+  <Import Sdk="Mile.Project.Configurations" Project="Mile.Project.Cpp.targets" />
+  <!--
+  XamlAddCppWinRTMergedWinmd
+
+  This target is overriden to prevent the XAML compiler from enabling
+  hybrid C++/WinRT and C++/CX support, due to a bug in the check.
+  -->
+  <Target Name="XamlAddCppWinRTMergedWinmd" AfterTargets="CppWinRTMergeProjectWinMDInputs" />
+</Project>

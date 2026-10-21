@@ -1,0 +1,210 @@
+﻿<Page
+  x:Class="NanaZip.Modern.ProgressPage"
+  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+  xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+  xmlns:local="using:NanaZip.Modern"
+  xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+  FontSize="14"
+  Foreground="{ThemeResource MiaoTextBrush}"
+  mc:Ignorable="d">
+
+  <Grid Background="{ThemeResource MiaoChromeBrush}">
+    <Grid.RowDefinitions>
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="*" />
+      <RowDefinition Height="Auto" />
+    </Grid.RowDefinitions>
+    <TextBlock
+      x:Name="TitleTextBlock"
+      Margin="16,0"
+      d:Text="[Adding]"
+      FontSize="22"
+      Style="{ThemeResource BaseTextBlockStyle}"
+      TextTrimming="CharacterEllipsis"
+      TextWrapping="NoWrap" />
+    <StackPanel
+      Grid.Row="1"
+      Grid.ColumnSpan="2"
+      Padding="16,0,16,16"
+      Orientation="Vertical">
+      <TextBlock
+        x:Name="FilePathTextBlock"
+        Margin="0,4,0,0"
+        d:Text="debian-12.0.0-amd64-netinst.iso"
+        TextTrimming="CharacterEllipsis"
+        TextWrapping="NoWrap" />
+      <TextBlock
+        x:Name="StatusTextBlock"
+        Margin="0,4,0,0"
+        d:Text="Compressing"
+        TextTrimming="CharacterEllipsis"
+        TextWrapping="NoWrap" />
+      <ProgressBar
+        x:Name="ProgressBar"
+        Margin="0,4,0,0"
+        d:Maximum="100"
+        d:Minimum="0"
+        d:Value="30" />
+
+      <Grid Margin="0,24,0,0" ColumnSpacing="32">
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="*" />
+          <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <Grid Grid.Column="0">
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="Auto" />
+          </Grid.ColumnDefinitions>
+          <StackPanel Grid.Column="0">
+            <TextBlock
+              x:Uid="/NanaZip.Modern/ProgressPage/ElapsedTimeLabel"
+              Margin="0,4,0,0"
+              Style="{ThemeResource BaseTextBlockStyle}">
+              [Elapsed time]
+            </TextBlock>
+            <TextBlock
+              x:Uid="/NanaZip.Modern/ProgressPage/RemainingTimeLabel"
+              Margin="0,4,0,0"
+              Style="{ThemeResource BaseTextBlockStyle}">
+              [Remaining time]
+            </TextBlock>
+            <TextBlock
+              x:Uid="/NanaZip.Modern/ProgressPage/FilesLabel"
+              Margin="0,4,0,0"
+              Style="{ThemeResource BaseTextBlockStyle}">
+              [Files]
+            </TextBlock>
+          </StackPanel>
+
+          <StackPanel Grid.Column="1" HorizontalAlignment="Right">
+            <TextBlock
+              x:Name="ElapsedTimeTextBlock"
+              Margin="0,4,0,0"
+              d:Text="00:00:08"
+              HorizontalTextAlignment="Right"
+              Typography.NumeralAlignment="Tabular" />
+            <TextBlock
+              x:Name="RemainingTimeTextBlock"
+              Margin="0,4,0,0"
+              d:Text="00:01:49"
+              HorizontalTextAlignment="Right"
+              Typography.NumeralAlignment="Tabular" />
+            <TextBlock
+              x:Name="FilesTextBlock"
+              Margin="0,4,0,0"
+              d:Text="1/6"
+              HorizontalTextAlignment="Right"
+              Typography.NumeralAlignment="Tabular" />
+          </StackPanel>
+        </Grid>
+
+        <Grid Grid.Column="1">
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="Auto" />
+          </Grid.ColumnDefinitions>
+          <StackPanel Grid.Column="0">
+            <TextBlock
+              x:Uid="/NanaZip.Modern/ProgressPage/SpeedLabel"
+              Margin="0,4,0,0"
+              Style="{ThemeResource BaseTextBlockStyle}">
+              [Speed]
+            </TextBlock>
+            <TextBlock
+              x:Uid="/NanaZip.Modern/ProgressPage/TotalSizeLabel"
+              Margin="0,4,0,0"
+              Style="{ThemeResource BaseTextBlockStyle}">
+              [Total size]
+            </TextBlock>
+            <TextBlock
+              x:Uid="/NanaZip.Modern/ProgressPage/ProcessedLabel"
+              Margin="0,4,0,0"
+              Style="{ThemeResource BaseTextBlockStyle}">
+              [Processed]
+            </TextBlock>
+            <TextBlock
+              x:Name="PackedSizeLabel"
+              x:Uid="/NanaZip.Modern/ProgressPage/PackedSizeLabel"
+              Margin="0,4,0,0"
+              Style="{ThemeResource BaseTextBlockStyle}">
+              [Packed Size]
+            </TextBlock>
+            <TextBlock
+              x:Name="CompressionRatioLabel"
+              x:Uid="/NanaZip.Modern/ProgressPage/CompressionRatioLabel"
+              Margin="0,4,0,0"
+              Style="{ThemeResource BaseTextBlockStyle}">
+              [Compression ratio]
+            </TextBlock>
+          </StackPanel>
+
+          <StackPanel Grid.Column="1" HorizontalAlignment="Right">
+            <TextBlock
+              x:Name="SpeedTextBlock"
+              Margin="0,4,0,0"
+              d:Text="30 MB/s"
+              HorizontalTextAlignment="Right"
+              Typography.NumeralAlignment="Tabular" />
+            <TextBlock
+              x:Name="TotalSizeTextBlock"
+              Margin="0,4,0,0"
+              d:Text="1886 MB"
+              HorizontalTextAlignment="Right"
+              Typography.NumeralAlignment="Tabular" />
+            <TextBlock
+              x:Name="ProcessedSizeTextBlock"
+              Margin="0,4,0,0"
+              d:Text="204 MB"
+              HorizontalTextAlignment="Right"
+              Typography.NumeralAlignment="Tabular" />
+            <TextBlock
+              x:Name="PackedSizeTextBlock"
+              Margin="0,4,0,0"
+              d:Text="182 MB"
+              HorizontalTextAlignment="Right"
+              Typography.NumeralAlignment="Tabular" />
+            <TextBlock
+              x:Name="CompressionRatioTextBlock"
+              Margin="0,4,0,0"
+              d:Text="89%"
+              HorizontalTextAlignment="Right"
+              Typography.NumeralAlignment="Tabular" />
+          </StackPanel>
+        </Grid>
+      </Grid>
+    </StackPanel>
+    <Grid
+      Grid.Row="2"
+      Background="{ThemeResource MiaoFieldBrush}"
+      BorderBrush="{ThemeResource MiaoLineBrush}"
+      BorderThickness="0,1,0,0">
+      <StackPanel
+        Grid.Column="1"
+        Padding="0,0,12,0"
+        HorizontalAlignment="Right"
+        Orientation="Horizontal">
+        <Button
+          x:Name="BackgroundButton"
+          Width="120"
+          Margin="4,16,4,16"
+          d:Content="[Background]"
+          Click="BackgroundButtonClick" />
+        <Button
+          x:Name="PauseButton"
+          Width="120"
+          Margin="4,16,4,16"
+          d:Content="Pause"
+          Click="PauseButtonClick" />
+        <Button
+          x:Uid="/NanaZip.Modern/Common/CancelButton"
+          Width="120"
+          Margin="4,16,4,16"
+          Click="CancelButtonClick"
+          Content="[Cancel]" />
+      </StackPanel>
+    </Grid>
+  </Grid>
+</Page>

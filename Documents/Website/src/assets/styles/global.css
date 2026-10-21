@@ -1,0 +1,40 @@
+body {
+	background-color: var(--fds-solid-background-base);
+	color: var(--fds-text-primary);
+    font-family: var(--fds-font-family-text);
+    font-size: var(--fds-body-font-size);
+    line-height: 20px;
+
+    margin: 0;
+    padding: 0;
+
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+main {
+    display: flex;
+    flex-direction: column;
+    flex: 1 0 auto;
+}
+
+main article {
+    max-width: 800px;
+    margin: 40px 16px 16px 16px;
+    align-self: center;
+}
+
+html {
+    color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+    html {
+        color-scheme: dark;
+    }
+}
+
+@view-transition {
+    navigation: auto;
+}

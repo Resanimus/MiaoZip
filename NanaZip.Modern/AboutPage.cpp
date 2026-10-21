@@ -1,0 +1,104 @@
+﻿#include "pch.h"
+#include "AboutPage.h"
+#include "GlassTheme.h"
+#if __has_include("AboutPage.g.cpp")
+#include "AboutPage.g.cpp"
+#endif
+
+#include "NanaZip.Modern.h"
+
+#include <winrt/Windows.UI.Xaml.Documents.h>
+
+#include <Mile.Project.Version.h>
+
+namespace winrt::NanaZip::Modern::implementation
+{
+    AboutPage::AboutPage(
+        _In_opt_ HWND WindowHandle,
+        _In_opt_ LPCWSTR ExtendedMessage) :
+        m_WindowHandle(WindowHandle),
+        m_ExtendedMessage(ExtendedMessage)
+    {
+
+    }
+
+    void AboutPage::InitializeComponent()
+    {
+        AboutPageT::InitializeComponent();
+        ApplyMiaoZipXamlTheme(*this);
+
+        winrt::hstring WindowTitle = winrt::hstring(
+            ::K7ModernGetLegacyStringResource(2900));
+        if (WindowTitle.empty())
+        {
+            WindowTitle = L"About MiaoZip";
+        }
+        ::SetWindowTextW(this->m_WindowHandle, WindowTitle.c_str());
+
+        std::wstring Version = std::wstring(
+            L"MiaoZip v1.0");
+        Version.append(
+            L" (" MILE_PROJECT_DOT_VERSION_STRING L")");
+#if defined(_M_AMD64)
+        Version.append(L" (x64)");
+#elif defined(_M_ARM64)
+        Version.append(L" (arm64)");
+#endif
+
+        std::wstring Content = std::wstring(
+            ::K7ModernGetLegacyStringResource(2901));
+        if (Content.empty())
+        {
+            Content = L"MiaoZip is free software; based on NanaZip and 7-Zip.";
+        }
+        if (!this->m_ExtendedMessage.empty())
+        {
+            Content.append(L"\r\n\r\n");
+            Content.append(this->m_ExtendedMessage);
+        }
+
+        this->GridTitleTextBlock().Text(WindowTitle);
+        this->Version().Text(Version);
+        this->Content().Text(Content);
+    }
+
+    void AboutPage::NanaZipWebsiteButtonClick(
+        winrt::IInspectable const& sender,
+        winrt::RoutedEventArgs const& e)
+    {
+        UNREFERENCED_PARAMETER(sender);
+        UNREFERENCED_PARAMETER(e);
+
+        SHELLEXECUTEINFOW ExecInfo = {};
+        ExecInfo.cbSize = sizeof(SHELLEXECUTEINFOW);
+        ExecInfo.lpVerb = L"open";
+        ExecInfo.lpFile = L"https://nanazip.org";
+        ExecInfo.nShow = SW_SHOWNORMAL;
+        ::ShellExecuteExW(&ExecInfo);
+    }
+
+    void AboutPage::GitHubButtonClick(
+        winrt::IInspectable const& sender,
+        winrt::RoutedEventArgs const& e)
+    {
+        UNREFERENCED_PARAMETER(sender);
+        UNREFERENCED_PARAMETER(e);
+
+        SHELLEXECUTEINFOW ExecInfo = {};
+        ExecInfo.cbSize = sizeof(SHELLEXECUTEINFOW);
+        ExecInfo.lpVerb = L"open";
+        ExecInfo.lpFile = L"https://github.com/M2Team/NanaZip";
+        ExecInfo.nShow = SW_SHOWNORMAL;
+        ::ShellExecuteExW(&ExecInfo);
+    }
+
+    void AboutPage::CancelButtonClick(
+        winrt::IInspectable const& sender,
+        winrt::RoutedEventArgs const& e)
+    {
+        UNREFERENCED_PARAMETER(sender);
+        UNREFERENCED_PARAMETER(e);
+
+        ::PostMessageW(this->m_WindowHandle, WM_CLOSE, 0, 0);
+    }
+}

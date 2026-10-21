@@ -1,0 +1,20 @@
+﻿<ResourceDictionary x:Class="NanaZip.Modern.StatusBarTemplate"
+  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:local="using:NanaZip.Modern">
+  <Style x:Key="MiaoStatusText" TargetType="TextBlock">
+    <Setter Property="FontSize" Value="12" /><Setter Property="Foreground" Value="{ThemeResource MiaoMutedBrush}" />
+    <Setter Property="VerticalAlignment" Value="Center" /><Setter Property="TextTrimming" Value="CharacterEllipsis" />
+  </Style>
+  <Style x:Key="DefaultStatusBarStyle" TargetType="local:StatusBar">
+    <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="local:StatusBar">
+      <Grid Background="{ThemeResource MiaoChromeBrush}" Padding="18,0" ColumnSpacing="18">
+        <Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+        <TextBlock Grid.Column="0" MaxWidth="280" Style="{StaticResource MiaoStatusText}" Text="{x:Bind Text1, Mode=OneWay}" />
+        <TextBlock Grid.Column="1" MaxWidth="150" Style="{StaticResource MiaoStatusText}" Text="{x:Bind Text2, Mode=OneWay}" />
+        <TextBlock Grid.Column="2" MaxWidth="150" Style="{StaticResource MiaoStatusText}" Text="{x:Bind Text3, Mode=OneWay}" />
+        <TextBlock Grid.Column="3" Style="{StaticResource MiaoStatusText}" Foreground="{ThemeResource MiaoAccentBrush}" TextAlignment="Right" Text="{x:Bind Text4, Mode=OneWay}" />
+      </Grid>
+    </ControlTemplate></Setter.Value></Setter>
+  </Style>
+  <Style BasedOn="{StaticResource DefaultStatusBarStyle}" TargetType="local:StatusBar" />
+</ResourceDictionary>
