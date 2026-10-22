@@ -326,7 +326,9 @@ EXTERN_C MO_RESULT MOAPI K7UserModernSetForegroundProcessMainWindow(
         DWORD ProcessId = 0;
         ::GetWindowThreadProcessId(hWnd, &ProcessId);
 
-        if (!lParam || ProcessId == (DWORD)lParam)
+        // Initialization owns the first show; never reveal a half-built
+        // dialog while another process is waiting for its message queue.
+        if ((!lParam || ProcessId == (DWORD)lParam) && ::IsWindowVisible(hWnd))
         {
             ::K7UserModernSetForegroundWindow(hWnd);
             return FALSE;

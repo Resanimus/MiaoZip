@@ -12,6 +12,7 @@
 
 // **************** NanaZip Modification Start ****************
 #include <K7User.h>
+#include "../../../../../MiaoZip.Features/NativeDialogSurface.h"
 // **************** NanaZip Modification End ****************
 
 extern HINSTANCE g_hInstance;
@@ -30,12 +31,8 @@ static INT_PTR APIENTRY DialogProcedure(HWND dialogHWND, UINT message, WPARAM wP
   CDialog *dialog = (CDialog *)(tempDialog.GetUserDataLongPtr());
   if (dialog == NULL)
     return FALSE;
-  if (message == WM_INITDIALOG) {
+  if (message == WM_INITDIALOG)
     dialog->Attach(dialogHWND);
-    // **************** NanaZip Modification Start ****************
-    ::K7UserModernSetForegroundWindow(dialogHWND);
-    // **************** NanaZip Modification End ****************
-  }
 
   /* MSDN: The dialog box procedure should return
        TRUE  - if it processed the message
@@ -44,7 +41,23 @@ static INT_PTR APIENTRY DialogProcedure(HWND dialogHWND, UINT message, WPARAM wP
      the dialog manager performs the default dialog operation in response to the message.
   */
 
-  try { return BoolToBOOL(dialog->OnMessage(message, wParam, lParam)); }
+  try
+  {
+    const bool handled = dialog->OnMessage(message, wParam, lParam);
+    // **************** NanaZip Modification Start ****************
+    // The foreground helper shows the dialog. Prepare every control before
+    // that first show, after OnInit has populated and positioned the form.
+    if (message == WM_INITDIALOG && ::IsWindow(dialogHWND))
+    {
+      MiaoZip::Dialogs::Attach(dialogHWND);
+      const HWND initialFocus = ::GetFocus();
+      ::K7UserModernSetForegroundWindow(dialogHWND);
+      if (!handled && ::IsChild(dialogHWND, initialFocus))
+        ::SetFocus(initialFocus);
+    }
+    // **************** NanaZip Modification End ****************
+    return BoolToBOOL(handled);
+  }
   catch(...) { return TRUE; }
 }
 

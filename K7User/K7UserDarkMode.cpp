@@ -498,6 +498,9 @@ namespace
         case WM_INITDIALOG:
         case WM_CREATE:
         {
+            // Our dialog procedure prepares presentation before its first show.
+            // Do not reapply the generic Mica backdrop after that preparation.
+            if (uMsg == WM_INITDIALOG && ::GetPropW(hWnd, MiaoZip::Dialogs::SurfaceProperty)) break;
             ::MileAllowDarkModeForWindow(
                 hWnd,
                 g_ThreadContext.ShouldAppsUseDarkMode);

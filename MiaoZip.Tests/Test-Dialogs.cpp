@@ -63,6 +63,64 @@ int wmain()
             }
             DestroyWindow(combo);
         }
+        // Exercise real button state transitions and the full offscreen paint,
+        // including the default-style change that previously drew native edges.
+        const auto appearance = Theme::Current();
+        int buttonPaints = 0;
+        for (bool darkMode : {false,true})
+        {
+            Theme::Current().Dark = darkMode;
+            Theme::Current().HighContrast = false;
+            HWND button = CreateWindowExW(0,L"BUTTON",L"",WS_CHILD | BS_DEFPUSHBUTTON,
+                0,0,120,36,componentHost,reinterpret_cast<HMENU>(IDOK),nullptr,nullptr);
+            Require(button != nullptr,"Cannot create native button component");
+            Dialogs::AttachControl(button);
+            HDC dc = CreateCompatibleDC(nullptr);
+            BITMAPINFO info{};
+            info.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+            info.bmiHeader.biWidth = 120; info.bmiHeader.biHeight = -36;
+            info.bmiHeader.biPlanes = 1; info.bmiHeader.biBitCount = 32;
+            void* memory{};
+            HBITMAP bitmap = CreateDIBSection(dc,&info,DIB_RGB_COLORS,&memory,nullptr,0);
+            Require(dc && bitmap && memory,"Cannot create button paint target");
+            auto previous = SelectObject(dc,bitmap);
+            for (DWORD style : {BS_PUSHBUTTON,BS_DEFPUSHBUTTON})
+            for (bool pressed : {false,true})
+            {
+                SendMessageW(button,BM_SETSTYLE,style,TRUE);
+                SendMessageW(button,BM_SETSTATE,pressed,0);
+                auto pixels = static_cast<DWORD*>(memory);
+                std::fill(pixels,pixels + 120 * 36,0x00ff00ff);
+                SendMessageW(button,WM_PRINTCLIENT,reinterpret_cast<WPARAM>(dc),PRF_CLIENT);
+                GdiFlush();
+                const auto background = Dialogs::ControlBackground(button);
+                const auto fill = pressed ? Design::Pressed(darkMode) : Design::AccentFill(darkMode);
+                int blended = 0;
+                for (int y = 0; y < 36; ++y)
+                for (int x = 0; x < 120; ++x)
+                {
+                    const auto pixel = pixels[y * 120 + x];
+                    const auto color = RGB((pixel >> 16) & 255,(pixel >> 8) & 255,pixel & 255);
+                    for (int shift : {0,8,16})
+                    {
+                        const auto value = (color >> shift) & 255;
+                        Require(value >= ((std::min)((background >> shift) & 255,(fill >> shift) & 255)) &&
+                            value <= ((std::max)((background >> shift) & 255,(fill >> shift) & 255)),
+                            "Native/dithered pixels remain on a themed button");
+                    }
+                    if (color != background && color != fill) ++blended;
+                    if (x > 15 && x < 105 && y > 5 && y < 30)
+                        Require(color == fill,"Solid button fill is not uniform");
+                    if (x == 0 || y == 0 || x == 119 || y == 35)
+                        Require(color == background,"Button spills outside its rounded frame");
+                }
+                Require(blended > 0,"Rounded edge is not antialiased");
+                ++buttonPaints;
+            }
+            SelectObject(dc,previous); DeleteObject(bitmap); DeleteDC(dc);
+            DestroyWindow(button);
+        }
+        Theme::Current() = appearance;
         DestroyWindow(componentHost);
         HMENU menu = CreatePopupMenu(), submenu = CreatePopupMenu();
         AppendMenuW(submenu,MF_STRING | MF_CHECKED,4101,L"名称(&N)\tCtrl+N");
@@ -103,7 +161,7 @@ int wmain()
         const auto dark=Design::Colors(true,false), light=Design::Colors(false,false);
         Require(dark.Chrome==RGB(22,26,33) && dark.Content==RGB(26,31,39),"Main dark palette changed");
         Require(light.Chrome==RGB(243,247,253) && light.Content==RGB(255,255,255),"Main light palette changed");
-        std::wcout << L"PASS: " << layouts << L" responsive/DPI layouts; 8 native combo sizes; preserved controls and menu commands; extraction completion guards; isolated persistent preferences; main palette.\n";
+        std::wcout << L"PASS: " << layouts << L" responsive/DPI layouts; " << buttonPaints << L" native button paint states; 8 native combo sizes; preserved controls and menu commands; extraction completion guards; isolated persistent preferences; main palette.\n";
         return 0;
     }
     catch (const std::exception& error)

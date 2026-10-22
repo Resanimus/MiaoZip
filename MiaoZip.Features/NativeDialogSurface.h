@@ -104,6 +104,53 @@ namespace MiaoZip::Dialogs
         return palette.Chrome;
     }
 
+    // Rasterize only the rounded frame with subpixel coverage. Solid areas
+    // stay exact palette colors; GDI text retains its normal font rendering.
+    // No halftone stretch/dithering, graphics runtime or extra dependency.
+    inline void SmoothButtonFrame(HDC dc, RECT bounds, COLORREF background,
+        COLORREF fill, COLORREF border, int radius, int stroke)
+    {
+        if (bounds.right <= 0 || bounds.bottom <= 0) return;
+        const int width = bounds.right, height = bounds.bottom;
+        const float inset = 1.0f;
+        const float outerRadius = static_cast<float>((std::min)(radius, (height - 2) / 2));
+        const auto inside = [](float x, float y, float left, float top,
+            float right, float bottom, float corner)
+        {
+            if (x < left || x >= right || y < top || y >= bottom) return false;
+            corner = (std::max)(0.0f, corner);
+            const float cx = (std::clamp)(x, left + corner, right - corner);
+            const float cy = (std::clamp)(y, top + corner, bottom - corner);
+            const float dx = x - cx, dy = y - cy;
+            return dx * dx + dy * dy <= corner * corner;
+        };
+        std::vector<DWORD> pixels(static_cast<size_t>(width) * height);
+        for (int y = 0; y < height; ++y)
+        for (int x = 0; x < width; ++x)
+        {
+            unsigned red = 0, green = 0, blue = 0;
+            for (int sy = 0; sy < 4; ++sy)
+            for (int sx = 0; sx < 4; ++sx)
+            {
+                const float px = x + (sx + 0.5f) / 4, py = y + (sy + 0.5f) / 4;
+                COLORREF color = background;
+                if (inside(px, py, inset, inset, width - inset, height - inset, outerRadius))
+                    color = inside(px, py, inset + stroke, inset + stroke,
+                        width - inset - stroke, height - inset - stroke, outerRadius - stroke) ? fill : border;
+                red += GetRValue(color); green += GetGValue(color); blue += GetBValue(color);
+            }
+            pixels[static_cast<size_t>(y) * width + x] =
+                (((red + 8) / 16) << 16) | (((green + 8) / 16) << 8) | ((blue + 8) / 16);
+        }
+        BITMAPINFO info{};
+        info.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+        info.bmiHeader.biWidth = width; info.bmiHeader.biHeight = -height;
+        info.bmiHeader.biPlanes = 1; info.bmiHeader.biBitCount = 32;
+        info.bmiHeader.biCompression = BI_RGB;
+        SetDIBitsToDevice(dc, 0, 0, width, height, 0, 0, 0, height,
+            pixels.data(), &info, DIB_RGB_COLORS);
+    }
+
     inline void PaintButton(HWND window, HDC dc, const ControlState& state)
     {
         const auto p = Theme::Colors();
@@ -179,10 +226,10 @@ namespace MiaoZip::Dialogs
             const bool primary = GetDlgCtrlID(window) == IDOK || type == BS_DEFPUSHBUTTON;
             const auto fill = !enabled ? p.Hover : pressed ? Design::Pressed(Theme::IsDark()) :
                 state.Hover ? p.Selected : primary ? Design::AccentFill(Theme::IsDark()) : Design::Field(Theme::IsDark());
+            SmoothButtonFrame(dc, r, ControlBackground(window), fill,
+                focus ? p.Accent : primary ? fill : p.Line,
+                Theme::Scale(window, Design::ControlRadius), focus ? Theme::Scale(window, 2) : 1);
             InflateRect(&r, -Theme::Scale(window, 1), -Theme::Scale(window, 1));
-            Theme::Rounded(dc, r, fill, Theme::Scale(window, Design::ControlRadius * 2));
-            Outline(dc, r, focus ? p.Accent : primary ? fill : p.Line,
-                Theme::Scale(window, Design::ControlRadius * 2), focus ? Theme::Scale(window, 2) : 1);
             SetTextColor(dc, !enabled ? p.Muted : primary && !pressed && !state.Hover
                 ? Design::AccentText(Theme::IsDark()) : p.Text);
             DrawTextW(dc, text.c_str(), -1, &r, format | DT_CENTER);
@@ -354,7 +401,22 @@ namespace MiaoZip::Dialogs
         if (!native && message == WM_PAINT && (state->Button || state->Combo || state->ComboList))
         {
             PAINTSTRUCT ps{}; auto dc = BeginPaint(window, &ps);
-            if (state->Button) PaintButton(window, dc, *state);
+            if (state->Button)
+            {
+                RECT client{}; GetClientRect(window, &client);
+                auto buffer = CreateCompatibleDC(dc);
+                auto bitmap = CreateCompatibleBitmap(dc, (std::max)(1L, client.right), (std::max)(1L, client.bottom));
+                if (buffer && bitmap)
+                {
+                    auto previous = SelectObject(buffer, bitmap);
+                    PaintButton(window, buffer, *state);
+                    BitBlt(dc, 0, 0, client.right, client.bottom, buffer, 0, 0, SRCCOPY);
+                    SelectObject(buffer, previous);
+                }
+                else PaintButton(window, dc, *state);
+                if (bitmap) DeleteObject(bitmap);
+                if (buffer) DeleteDC(buffer);
+            }
             else if (state->ComboList) PaintComboList(window, dc);
             else PaintCombo(window, dc, *state);
             EndPaint(window, &ps); return 0;
@@ -367,7 +429,11 @@ namespace MiaoZip::Dialogs
             return 0;
         }
         if (!native && state->Button && message == WM_NCPAINT) return 0;
-        auto result = DefSubclassProc(window, message, wp, lp);
+        // Dialog default-button changes request immediate native painting.
+        // Preserve the style/state transition, then paint the entire themed
+        // surface once instead of leaving a classic border underneath it.
+        const bool restyle = !native && state->Button && message == BM_SETSTYLE;
+        auto result = DefSubclassProc(window, message, wp, restyle ? FALSE : lp);
         DWORD_PTR alive{};
         if (!GetWindowSubclass(window, ControlProc, ControlId, &alive) || alive != data) return result;
         if (message == WM_LBUTTONDOWN) state->MouseFocus = true;
@@ -386,7 +452,7 @@ namespace MiaoZip::Dialogs
             message == LB_SETCURSEL || message == WM_SHOWWINDOW || message == WM_CHAR))
             RedrawWindow(window, nullptr, nullptr, RDW_INVALIDATE | RDW_UPDATENOW);
         if (message == WM_SETFOCUS || message == WM_KILLFOCUS || message == WM_ENABLE ||
-            message == BM_SETCHECK || message == BM_SETSTATE || message == WM_LBUTTONDOWN ||
+            message == BM_SETSTYLE || message == BM_SETCHECK || message == BM_SETSTATE || message == WM_LBUTTONDOWN ||
             message == WM_LBUTTONUP || message == WM_KEYDOWN || message == WM_KEYUP ||
             message == CB_SETCURSEL || message == WM_SETTEXT || message == WM_UPDATEUISTATE)
             RedrawWindow(window, nullptr, nullptr, RDW_INVALIDATE | (state->Edit ? RDW_FRAME : 0) | ((state->Button || state->ComboList) ? RDW_UPDATENOW : 0));

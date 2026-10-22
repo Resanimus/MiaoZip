@@ -913,7 +913,6 @@ public:
   void Post_Refresh_StatusBar();
   void Refresh_StatusBar();
 
-  void CreateArchive();
   void AddToArchive();
   // **************** NanaZip Modification Start ****************
   void AddToExistingArchive();

@@ -27,7 +27,6 @@ namespace winrt::NanaZip::Modern::implementation
         void RefreshThemeChecks();
         void OverflowMenuClick(winrt::IInspectable const&, winrt::RoutedEventArgs const&);
 
-        void CreateButtonClick(winrt::IInspectable const&, winrt::RoutedEventArgs const&);
         void ShowNativeMenu(HMENU menu);
 
         void AddButtonClick(

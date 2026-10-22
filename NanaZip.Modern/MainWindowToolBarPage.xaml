@@ -182,7 +182,6 @@
     <CommandBar x:Name="MainCommands" Style="{StaticResource MiaoCommandBar}" Grid.Column="0" Background="Transparent" Height="40" MinHeight="40" Padding="0" HorizontalAlignment="Left" VerticalAlignment="Center" DefaultLabelPosition="Right" IsDynamicOverflowEnabled="True" IsOpen="False">
       <CommandBar.PrimaryCommands>
         <AppBarButton x:Name="ExtractButton" Style="{StaticResource GlassPrimary}" Background="{ThemeResource MiaoAccentFillBrush}" Foreground="{ThemeResource MiaoAccentTextBrush}" Click="ExtractButtonClick"><AppBarButton.Icon><PathIcon Data="M9,2H11V10.17L14.09,7.09L15.5,8.5L10,14L4.5,8.5L5.91,7.09L9,10.17Z M3,13H5V17H15V13H17V18A1,1 0 0 1 16,19H4A1,1 0 0 1 3,18Z" /></AppBarButton.Icon></AppBarButton>
-        <AppBarButton x:Name="CreateButton" Style="{StaticResource GlassCommand}" Label="创建" AutomationProperties.Name="创建压缩包" ToolTipService.ToolTip="选择文件，创建新的压缩包" Click="CreateButtonClick"><AppBarButton.Icon><PathIcon Data="M4,2H12L17,7V11H15V8H11V4H6V17H10V19H4Z M15,12H17V15H20V17H17V20H15V17H12V15H15Z" /></AppBarButton.Icon></AppBarButton>
         <AppBarButton x:Name="AddButton" Style="{StaticResource GlassCommand}" Click="AddButtonClick" Icon="Add" />
         <AppBarButton x:Name="TestButton" Style="{StaticResource GlassCommand}" Click="TestButtonClick" Icon="Accept" />
         <AppBarSeparator />

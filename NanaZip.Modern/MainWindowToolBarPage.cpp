@@ -77,7 +77,6 @@ namespace
         enum
         {
             Add = 1070,
-            Create = 1078,
             Extract = 1071,
             Test = 1072,
             SmartExtract = 1073,
@@ -243,7 +242,6 @@ namespace winrt::NanaZip::Modern::implementation
         };
         const Command primary[] = {
             {ExtractButton(), &MainWindowToolBarPage::ExtractButtonClick},
-            {CreateButton(), &MainWindowToolBarPage::CreateButtonClick},
             {AddButton(), &MainWindowToolBarPage::AddButtonClick},
             {TestButton(), &MainWindowToolBarPage::TestButtonClick},
             {RecoveryButton(), &MainWindowToolBarPage::RecoveryButtonClick},
@@ -277,11 +275,6 @@ namespace winrt::NanaZip::Modern::implementation
         MiaoZip::Theme::Save(MiaoZip::Theme::Current().Appearance, this->TransparencyItem().IsChecked());
         ApplyMiaoZipXamlTheme(*this); RefreshThemeChecks();
         ::PostMessageW(this->m_WindowHandle, WM_COMMAND, MAKEWPARAM(1076, BN_CLICKED), 0);
-    }
-
-    void MainWindowToolBarPage::CreateButtonClick(winrt::IInspectable const&, winrt::RoutedEventArgs const&)
-    {
-        ::PostMessageW(m_WindowHandle, WM_COMMAND, MAKEWPARAM(ToolBarCommandID::Create, BN_CLICKED), 0);
     }
 
     void MainWindowToolBarPage::AddButtonClick(
