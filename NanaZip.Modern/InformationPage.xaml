@@ -5,11 +5,16 @@
   xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
   xmlns:local="using:NanaZip.Modern"
   xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-  FontSize="14"
+  FontFamily="Microsoft YaHei UI" FontSize="13"
   Foreground="{ThemeResource MiaoTextBrush}"
   mc:Ignorable="d">
 
-  <Grid Background="{ThemeResource MiaoChromeBrush}">
+  <Page.Resources>
+    <ResourceDictionary><ResourceDictionary.MergedDictionaries>
+      <ResourceDictionary Source="ms-appx:///NanaZip.Modern/DialogTheme.xaml" />
+    </ResourceDictionary.MergedDictionaries></ResourceDictionary>
+  </Page.Resources>
+  <Grid Background="{ThemeResource MiaoChromeSolidBrush}">
     <Grid.RowDefinitions>
       <RowDefinition Height="Auto" />
       <RowDefinition Height="*" />
@@ -17,31 +22,31 @@
     </Grid.RowDefinitions>
     <TextBlock
       x:Name="TitleTextBlock"
-      Margin="16,0"
+      Margin="24,20,24,12"
       d:Text="[Information]"
-      FontSize="22"
-      Style="{ThemeResource BaseTextBlockStyle}" />
+      FontSize="20"
+      Style="{StaticResource MiaoDialogTitle}" />
     <TextBox
       x:Name="InformationTextBox"
       Grid.Row="1"
-      Margin="16,8,16,16"
+      Margin="24,4,24,24"
       AcceptsReturn="True"
       CopyingToClipboard="InformationTextBoxCopyingToClipboardHandler"
       IsReadOnly="True"
-      ScrollViewer.HorizontalScrollBarVisibility="Visible"
-      ScrollViewer.VerticalScrollBarVisibility="Visible">
+      ScrollViewer.HorizontalScrollBarVisibility="Auto"
+      ScrollViewer.VerticalScrollBarVisibility="Auto">
       <TextBox.SelectionFlyout>
         <TextCommandBarFlyout Placement="BottomEdgeAlignedLeft" />
       </TextBox.SelectionFlyout>
     </TextBox>
     <Grid
       Grid.Row="2"
-      Background="{ThemeResource MiaoFieldBrush}"
+      Background="{ThemeResource MiaoChromeSolidBrush}"
       BorderBrush="{ThemeResource MiaoLineBrush}"
       BorderThickness="0,1,0,0">
       <StackPanel
         Grid.Column="1"
-        Padding="0,0,12,0"
+        Padding="0,0,20,0"
         HorizontalAlignment="Right"
         Orientation="Horizontal">
         <Button

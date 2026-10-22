@@ -1,4 +1,4 @@
-/*
+﻿/*
  * PROJECT:    NanaZip Platform User Library (K7User)
  * FILE:       K7UserDarkMode.cpp
  * PURPOSE:    Implementation for NanaZip Platform User Dark Mode Support
@@ -10,6 +10,8 @@
 
 #include "K7UserPrivate.h"
 #include "../MiaoZip.Features/Theme.h"
+#include "../MiaoZip.Features/NativeDialogSurface.h"
+#include "../MiaoZip.Features/NativeMenuSurface.h"
 
 #include <Mile.Helpers.h>
 #include <Mile.Helpers.CppBase.h>
@@ -387,6 +389,16 @@ namespace
         }
         // **************** NanaZip Modification End ****************
 
+        if (uMsg == WM_MENUCHAR)
+        {
+            LRESULT menuResult = 0;
+            if (MiaoZip::Menus::Character(hWnd, wParam, reinterpret_cast<HMENU>(lParam), menuResult)) return menuResult;
+        }
+        if (uMsg == WM_MEASUREITEM && MiaoZip::Menus::Measure(hWnd, reinterpret_cast<MEASUREITEMSTRUCT*>(lParam))) return TRUE;
+        if (uMsg == WM_DRAWITEM && MiaoZip::Menus::Draw(hWnd, reinterpret_cast<DRAWITEMSTRUCT*>(lParam))) return TRUE;
+        if (uMsg == WM_UNINITMENUPOPUP) MiaoZip::Menus::Restore(hWnd, reinterpret_cast<HMENU>(wParam));
+        if (uMsg == WM_NCDESTROY) MiaoZip::Menus::Restore(hWnd, nullptr, true);
+
         switch (uMsg)
         {
         case WM_CTLCOLOREDIT:
@@ -423,6 +435,9 @@ namespace
             uMsg,
             wParam,
             lParam);
+
+        if (uMsg == WM_INITMENUPOPUP && !HIWORD(lParam))
+            MiaoZip::Menus::Prepare(hWnd, reinterpret_cast<HMENU>(wParam));
 
         switch (uMsg)
         {
@@ -544,6 +559,7 @@ namespace
                 }
             }
 
+            if (uMsg == WM_INITDIALOG) MiaoZip::Dialogs::Attach(hWnd);
             break;
         }
         case WM_ERASEBKGND:

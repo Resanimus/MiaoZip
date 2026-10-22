@@ -58,6 +58,13 @@ class CExtractDialog: public NWindows::NControl::CModalDialog
   virtual bool OnInit() Z7_override;
   virtual bool OnButtonClicked(unsigned buttonID, HWND buttonHWND) Z7_override;
   virtual void OnOK() Z7_override;
+#ifndef Z7_SFX
+  virtual bool OnMessage(UINT message, WPARAM wParam, LPARAM lParam) Z7_override;
+  void LayoutMiaoZipForm();
+  int MiaoZipScroll = 0;
+  bool MiaoZipLayoutReady = false;
+  bool MiaoZipLayingOut = false;
+#endif
 
   #ifndef Z7_NO_REGISTRY
 
@@ -97,6 +104,7 @@ public:
   CBoolPair ElimDup;
   CBoolPair SmartExtract;
 #ifndef Z7_SFX
+  bool ExitAfterExtraction = false;
   bool MiaoZipManualSubfolder = false;
   void UpdateMiaoZipOrganization(bool rememberManual);
 #endif

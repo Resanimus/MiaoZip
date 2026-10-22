@@ -1,6 +1,7 @@
 ﻿// App.cpp
 
 #include "StdAfx.h"
+#include "../../../../../../MiaoZip.Features/ExtractionCompletion.h"
 #include "../../../../../../MiaoZip.Features/ExtractionPreferences.h"
 #include <filesystem>
 #include <set>
@@ -776,6 +777,9 @@ void CApp::OnCopy(
   CPanel::CDisableNotify disableNotify2(srcPanel);
 
   HRESULT result = S_OK;
+  const bool miaoZipExit = showExtractAll && !move && MiaoZip::Extraction::ExitAfterExtraction();
+  bool miaoZipCompleted = false;
+  const auto miaoZipOwner = MiaoZip::Extraction::FindExtractionOwner(srcPanel.GetParent());
 
   if (useSrcPanel)
   {
@@ -787,6 +791,7 @@ void CApp::OnCopy(
     options.showErrorMessages = true;
 
     result = srcPanel.CopyTo(options, indices, NULL);
+    miaoZipCompleted = options.CompletedWithoutErrors;
   }
 
   if (result == S_OK && useDestPanel)
@@ -844,6 +849,8 @@ void CApp::OnCopy(
   disableNotify1.Restore();
   disableNotify2.Restore();
   srcPanel.SetFocusToList();
+  if (MiaoZip::Extraction::ShouldExitAfterExtraction(miaoZipExit, false,
+      result == S_OK, miaoZipCompleted, false)) MiaoZip::Extraction::RequestOwnerClose(miaoZipOwner);
 }
 
 void CApp::OnSetSameFolder(int srcPanelIndex)

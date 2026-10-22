@@ -25,6 +25,10 @@ namespace winrt::NanaZip::Modern::implementation
         void ThemeChoiceClick(winrt::IInspectable const&, winrt::RoutedEventArgs const&);
         void TransparencyClick(winrt::IInspectable const&, winrt::RoutedEventArgs const&);
         void RefreshThemeChecks();
+        void OverflowMenuClick(winrt::IInspectable const&, winrt::RoutedEventArgs const&);
+
+        void CreateButtonClick(winrt::IInspectable const&, winrt::RoutedEventArgs const&);
+        void ShowNativeMenu(HMENU menu);
 
         void AddButtonClick(
             winrt::IInspectable const& sender,
@@ -78,6 +82,8 @@ namespace winrt::NanaZip::Modern::implementation
 
     private:
 
+        winrt::Windows::UI::Xaml::Controls::MenuFlyout m_OverflowMenu{ nullptr };
+        winrt::Windows::UI::Xaml::Controls::MenuFlyout m_MainMenu{ nullptr };
         HWND m_WindowHandle;
         HMENU m_MoreMenu;
 

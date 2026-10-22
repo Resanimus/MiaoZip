@@ -61,6 +61,7 @@
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Page Include="GlassTheme.xaml" />
+    <Page Include="DialogTheme.xaml" />
     <Page Include="AddressBarTemplate.xaml" />
     <Page Include="CopyLocationPage.xaml">
       <SubType>Designer</SubType>

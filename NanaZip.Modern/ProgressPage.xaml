@@ -5,11 +5,16 @@
   xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
   xmlns:local="using:NanaZip.Modern"
   xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-  FontSize="14"
+  FontFamily="Microsoft YaHei UI" FontSize="13"
   Foreground="{ThemeResource MiaoTextBrush}"
   mc:Ignorable="d">
 
-  <Grid Background="{ThemeResource MiaoChromeBrush}">
+  <Page.Resources>
+    <ResourceDictionary><ResourceDictionary.MergedDictionaries>
+      <ResourceDictionary Source="ms-appx:///NanaZip.Modern/DialogTheme.xaml" />
+    </ResourceDictionary.MergedDictionaries></ResourceDictionary>
+  </Page.Resources>
+  <Grid Background="{ThemeResource MiaoChromeSolidBrush}">
     <Grid.RowDefinitions>
       <RowDefinition Height="Auto" />
       <RowDefinition Height="*" />
@@ -17,37 +22,40 @@
     </Grid.RowDefinitions>
     <TextBlock
       x:Name="TitleTextBlock"
-      Margin="16,0"
+      Margin="24,20,24,12"
       d:Text="[Adding]"
-      FontSize="22"
-      Style="{ThemeResource BaseTextBlockStyle}"
+      FontSize="20"
+      Style="{StaticResource MiaoDialogTitle}"
       TextTrimming="CharacterEllipsis"
       TextWrapping="NoWrap" />
+    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
     <StackPanel
-      Grid.Row="1"
       Grid.ColumnSpan="2"
-      Padding="16,0,16,16"
+      Padding="24,0,24,24"
       Orientation="Vertical">
       <TextBlock
         x:Name="FilePathTextBlock"
-        Margin="0,4,0,0"
+        Margin="0,8,0,0"
         d:Text="debian-12.0.0-amd64-netinst.iso"
         TextTrimming="CharacterEllipsis"
         TextWrapping="NoWrap" />
       <TextBlock
         x:Name="StatusTextBlock"
-        Margin="0,4,0,0"
+        Foreground="{ThemeResource MiaoMutedBrush}"
+        Margin="0,8,0,0"
         d:Text="Compressing"
         TextTrimming="CharacterEllipsis"
         TextWrapping="NoWrap" />
       <ProgressBar
         x:Name="ProgressBar"
-        Margin="0,4,0,0"
+        Height="6" Foreground="{ThemeResource MiaoAccentFillBrush}"
+        Background="{ThemeResource MiaoLineBrush}"
+        Margin="0,16,0,0"
         d:Maximum="100"
         d:Minimum="0"
         d:Value="30" />
 
-      <Grid Margin="0,24,0,0" ColumnSpacing="32">
+      <Grid Margin="0,24,0,0" Padding="16" Background="{ThemeResource MiaoSurfaceBrush}" BorderBrush="{ThemeResource MiaoLineBrush}" BorderThickness="1" CornerRadius="12" ColumnSpacing="24">
         <Grid.ColumnDefinitions>
           <ColumnDefinition Width="*" />
           <ColumnDefinition Width="*" />
@@ -61,20 +69,20 @@
           <StackPanel Grid.Column="0">
             <TextBlock
               x:Uid="/NanaZip.Modern/ProgressPage/ElapsedTimeLabel"
-              Margin="0,4,0,0"
-              Style="{ThemeResource BaseTextBlockStyle}">
+              Margin="0,8,0,0"
+              Style="{StaticResource MiaoDialogLabel}">
               [Elapsed time]
             </TextBlock>
             <TextBlock
               x:Uid="/NanaZip.Modern/ProgressPage/RemainingTimeLabel"
-              Margin="0,4,0,0"
-              Style="{ThemeResource BaseTextBlockStyle}">
+              Margin="0,8,0,0"
+              Style="{StaticResource MiaoDialogLabel}">
               [Remaining time]
             </TextBlock>
             <TextBlock
               x:Uid="/NanaZip.Modern/ProgressPage/FilesLabel"
-              Margin="0,4,0,0"
-              Style="{ThemeResource BaseTextBlockStyle}">
+              Margin="0,8,0,0"
+              Style="{StaticResource MiaoDialogLabel}">
               [Files]
             </TextBlock>
           </StackPanel>
@@ -82,19 +90,19 @@
           <StackPanel Grid.Column="1" HorizontalAlignment="Right">
             <TextBlock
               x:Name="ElapsedTimeTextBlock"
-              Margin="0,4,0,0"
+              Margin="0,8,0,0"
               d:Text="00:00:08"
               HorizontalTextAlignment="Right"
               Typography.NumeralAlignment="Tabular" />
             <TextBlock
               x:Name="RemainingTimeTextBlock"
-              Margin="0,4,0,0"
+              Margin="0,8,0,0"
               d:Text="00:01:49"
               HorizontalTextAlignment="Right"
               Typography.NumeralAlignment="Tabular" />
             <TextBlock
               x:Name="FilesTextBlock"
-              Margin="0,4,0,0"
+              Margin="0,8,0,0"
               d:Text="1/6"
               HorizontalTextAlignment="Right"
               Typography.NumeralAlignment="Tabular" />
@@ -109,34 +117,34 @@
           <StackPanel Grid.Column="0">
             <TextBlock
               x:Uid="/NanaZip.Modern/ProgressPage/SpeedLabel"
-              Margin="0,4,0,0"
-              Style="{ThemeResource BaseTextBlockStyle}">
+              Margin="0,8,0,0"
+              Style="{StaticResource MiaoDialogLabel}">
               [Speed]
             </TextBlock>
             <TextBlock
               x:Uid="/NanaZip.Modern/ProgressPage/TotalSizeLabel"
-              Margin="0,4,0,0"
-              Style="{ThemeResource BaseTextBlockStyle}">
+              Margin="0,8,0,0"
+              Style="{StaticResource MiaoDialogLabel}">
               [Total size]
             </TextBlock>
             <TextBlock
               x:Uid="/NanaZip.Modern/ProgressPage/ProcessedLabel"
-              Margin="0,4,0,0"
-              Style="{ThemeResource BaseTextBlockStyle}">
+              Margin="0,8,0,0"
+              Style="{StaticResource MiaoDialogLabel}">
               [Processed]
             </TextBlock>
             <TextBlock
               x:Name="PackedSizeLabel"
               x:Uid="/NanaZip.Modern/ProgressPage/PackedSizeLabel"
-              Margin="0,4,0,0"
-              Style="{ThemeResource BaseTextBlockStyle}">
+              Margin="0,8,0,0"
+              Style="{StaticResource MiaoDialogLabel}">
               [Packed Size]
             </TextBlock>
             <TextBlock
               x:Name="CompressionRatioLabel"
               x:Uid="/NanaZip.Modern/ProgressPage/CompressionRatioLabel"
-              Margin="0,4,0,0"
-              Style="{ThemeResource BaseTextBlockStyle}">
+              Margin="0,8,0,0"
+              Style="{StaticResource MiaoDialogLabel}">
               [Compression ratio]
             </TextBlock>
           </StackPanel>
@@ -144,31 +152,31 @@
           <StackPanel Grid.Column="1" HorizontalAlignment="Right">
             <TextBlock
               x:Name="SpeedTextBlock"
-              Margin="0,4,0,0"
+              Margin="0,8,0,0"
               d:Text="30 MB/s"
               HorizontalTextAlignment="Right"
               Typography.NumeralAlignment="Tabular" />
             <TextBlock
               x:Name="TotalSizeTextBlock"
-              Margin="0,4,0,0"
+              Margin="0,8,0,0"
               d:Text="1886 MB"
               HorizontalTextAlignment="Right"
               Typography.NumeralAlignment="Tabular" />
             <TextBlock
               x:Name="ProcessedSizeTextBlock"
-              Margin="0,4,0,0"
+              Margin="0,8,0,0"
               d:Text="204 MB"
               HorizontalTextAlignment="Right"
               Typography.NumeralAlignment="Tabular" />
             <TextBlock
               x:Name="PackedSizeTextBlock"
-              Margin="0,4,0,0"
+              Margin="0,8,0,0"
               d:Text="182 MB"
               HorizontalTextAlignment="Right"
               Typography.NumeralAlignment="Tabular" />
             <TextBlock
               x:Name="CompressionRatioTextBlock"
-              Margin="0,4,0,0"
+              Margin="0,8,0,0"
               d:Text="89%"
               HorizontalTextAlignment="Right"
               Typography.NumeralAlignment="Tabular" />
@@ -176,14 +184,15 @@
         </Grid>
       </Grid>
     </StackPanel>
+    </ScrollViewer>
     <Grid
       Grid.Row="2"
-      Background="{ThemeResource MiaoFieldBrush}"
+      Background="{ThemeResource MiaoChromeSolidBrush}"
       BorderBrush="{ThemeResource MiaoLineBrush}"
       BorderThickness="0,1,0,0">
       <StackPanel
         Grid.Column="1"
-        Padding="0,0,12,0"
+        Padding="0,0,20,0"
         HorizontalAlignment="Right"
         Orientation="Horizontal">
         <Button

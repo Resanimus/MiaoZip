@@ -927,6 +927,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         ExecuteCommand(wmId);
         return 0;
       }
+      if (wmId == 1078)
+      {
+        g_App.GetFocusedPanel().CreateArchive();
+        return 0;
+      }
       if (wmId == 1076)
       {
         ::SendMessageW(hWnd, WM_SETTINGCHANGE, 0, reinterpret_cast<LPARAM>(L"ImmersiveColorSet"));

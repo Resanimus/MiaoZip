@@ -2,6 +2,7 @@
 #pragma once
 #include <Windows.h>
 #include <dwmapi.h>
+#include "DesignTokens.h"
 #pragma comment(lib, "advapi32.lib")
 #pragma comment(lib, "dwmapi.lib")
 
@@ -67,25 +68,27 @@ namespace MiaoZip::Theme
         return first == ERROR_SUCCESS && second == ERROR_SUCCESS;
     }
 
-    struct Palette
-    {
-        COLORREF Chrome, Sidebar, Content, Text, Muted, Line, Hover, Selected, Accent;
-    };
+    using Palette = Design::Palette;
     inline Palette Colors()
     {
-        if (Current().HighContrast)
-            return { GetSysColor(COLOR_WINDOW), GetSysColor(COLOR_WINDOW),
-                GetSysColor(COLOR_WINDOW), GetSysColor(COLOR_WINDOWTEXT),
-                GetSysColor(COLOR_WINDOWTEXT), GetSysColor(COLOR_WINDOWTEXT),
-                GetSysColor(COLOR_HIGHLIGHT), GetSysColor(COLOR_HIGHLIGHT),
-                GetSysColor(COLOR_HIGHLIGHTTEXT) };
-        if (IsDark())
-            return { RGB(22,26,33), RGB(24,29,37), RGB(26,31,39),
-                RGB(231,235,242), RGB(166,175,191), RGB(45,52,64),
-                RGB(36,45,58), RGB(38,61,88), RGB(155,178,204) };
-        return { RGB(243,247,253), RGB(231,238,247), RGB(255,255,255),
-            RGB(32,45,64), RGB(104,122,145), RGB(222,230,241),
-            RGB(243,247,253), RGB(205,221,238), RGB(71,100,134) };
+        return Design::Colors(IsDark(), Current().HighContrast);
+    }
+
+    // The inherited 7-Zip translation units still set an older WINVER.
+    // Resolve the per-monitor APIs without changing the archive engine's macros.
+    inline UINT Dpi(HWND window)
+    {
+        using Function = UINT (WINAPI*)(HWND);
+        static const auto function = reinterpret_cast<Function>(GetProcAddress(GetModuleHandleW(L"user32.dll"), "GetDpiForWindow"));
+        if (function) { const UINT dpi = function(window); if (dpi) return dpi; }
+        HDC dc = GetDC(window); const UINT dpi = GetDeviceCaps(dc, LOGPIXELSX); ReleaseDC(window, dc);
+        return dpi ? dpi : 96;
+    }
+    inline BOOL AdjustForDpi(RECT* rect, DWORD style, BOOL menu, DWORD extendedStyle, UINT dpi)
+    {
+        using Function = BOOL (WINAPI*)(LPRECT,DWORD,BOOL,DWORD,UINT);
+        static const auto function = reinterpret_cast<Function>(GetProcAddress(GetModuleHandleW(L"user32.dll"), "AdjustWindowRectExForDpi"));
+        return function ? function(rect,style,menu,extendedStyle,dpi) : AdjustWindowRectEx(rect,style,menu,extendedStyle);
     }
 
     inline bool ApplyBackdrop(HWND window)
@@ -108,8 +111,8 @@ namespace MiaoZip::Theme
         MARGINS margins{};
         if (active)
         {
-            margins.cyTopHeight = MulDiv(152, GetDpiForWindow(window), 96);
-            margins.cyBottomHeight = MulDiv(40, GetDpiForWindow(window), 96);
+            margins.cyTopHeight = MulDiv(152, Dpi(window), 96);
+            margins.cyBottomHeight = MulDiv(40, Dpi(window), 96);
         }
         DwmExtendFrameIntoClientArea(window, &margins);
         return active;
@@ -117,7 +120,7 @@ namespace MiaoZip::Theme
 
     inline int Scale(HWND window, int value)
     {
-        const UINT dpi = GetDpiForWindow(window);
+        const UINT dpi = Dpi(window);
         return MulDiv(value, dpi ? dpi : 96, 96);
     }
 

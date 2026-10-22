@@ -27,6 +27,9 @@
 #define IDX_EXTRACT_OPEN_FOLDER     3433
 #define IDX_EXTRACT_ON_OPEN         3434
 #define IDX_MIAOZIP_ORGANIZE         3435
+#define IDX_MIAOZIP_EXIT             3436
+#define IDG_MIAOZIP_PATH_OPTIONS     3438
+#define IDG_MIAOZIP_COMPLETION       3439
 // **************** NanaZip Modification End ****************
 
 #define IDX_PASSWORD_SHOW           3803

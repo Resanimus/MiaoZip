@@ -1,6 +1,9 @@
 ﻿// Windows/Shell.cpp
 
 #include "StdAfx.h"
+#ifndef UNDER_CE
+#include <K7User.h>
+#endif
 
 #include "../Common/MyCom.h"
 #include "../Common/StringConvert.h"
@@ -667,6 +670,9 @@ bool BrowseForFolder(LPBROWSEINFO browseInfo, CSysString &resultPath)
 {
   resultPath.Empty();
   NWindows::NCOM::CComInitializer comInitializer;
+  // **************** NanaZip Modification Start ****************
+  MiaoZip::SystemDialogThemeScope systemTheme;
+  // **************** NanaZip Modification End ****************
   LPITEMIDLIST itemIDList = ::SHBrowseForFolder(browseInfo);
   if (!itemIDList)
     return false;
@@ -763,6 +769,9 @@ static bool BrowseForFolder(LPBROWSEINFOW browseInfo, UString &resultPath)
       "SHBrowseForFolderW");
   if (!f_SHBrowseForFolderW)
     return false;
+  // **************** NanaZip Modification Start ****************
+  MiaoZip::SystemDialogThemeScope systemTheme;
+  // **************** NanaZip Modification End ****************
   LPITEMIDLIST itemIDList = f_SHBrowseForFolderW(browseInfo);
   if (!itemIDList)
     return false;

@@ -2,6 +2,10 @@
 
 #include "StdAfx.h"
 #include "../../../../../../MiaoZip.Features/ExtractionPreferences.h"
+#include "../../../../../../MiaoZip.Features/Theme.h"
+#include "../../../../../../MiaoZip.Features/ExtractDialogLayout.h"
+#include "../../../../../../MiaoZip.Features/NativeDialogSurface.h"
+#include <windowsx.h>
 
 #include "../../../Common/StringConvert.h"
 #include "../../../Common/Wildcard.h"
@@ -273,12 +277,133 @@ bool CExtractDialog::OnInit()
   CheckButton(IDX_MIAOZIP_ORGANIZE, SmartExtract.Def ? SmartExtract.Val : MiaoZip::Extraction::OrganizeOuterFolder());
   UpdateMiaoZipOrganization(false);
 #endif
+#ifndef Z7_SFX
+  // **************** NanaZip Modification Start ****************
+  SetPropW(*this, L"MiaoZip.DialogLayout", reinterpret_cast<HANDLE>(1));
+  SetWindowTextW(*this, L"解压 — MiaoZip");
+  SetWindowTextW(GetItem(IDT_EXTRACT_EXTRACT_TO), L"目标文件夹");
+  SetWindowTextW(GetItem(IDX_EXTRACT_NAME_ENABLE), L"解压到指定子文件夹");
+  SetWindowTextW(GetItem(IDB_EXTRACT_SET_PATH), L"浏览…");
+  SetWindowTextW(GetItem(IDG_MIAOZIP_PATH_OPTIONS), L"路径与文件");
+  SetWindowTextW(GetItem(IDG_MIAOZIP_COMPLETION), L"完成选项");
+  SetWindowTextW(GetItem(IDX_MIAOZIP_EXIT), L"完成后自动关闭 MiaoZip");
+  SetWindowTextW(GetItem(IDOK), L"解压");
+  CheckButton(IDX_MIAOZIP_EXIT, MiaoZip::Extraction::ExitAfterExtraction());
+  SetWindowLongPtrW(*this, GWL_STYLE, GetWindowLongPtrW(*this, GWL_STYLE) | WS_THICKFRAME | WS_MAXIMIZEBOX);
+  const UINT dpi = MiaoZip::Theme::Dpi(*this);
+  RECT size{0, 0, MiaoZip::Theme::Scale(*this, 780), MiaoZip::Theme::Scale(*this, 612)};
+  MiaoZip::Theme::AdjustForDpi(&size, static_cast<DWORD>(GetWindowLongPtrW(*this, GWL_STYLE)), FALSE,
+      static_cast<DWORD>(GetWindowLongPtrW(*this, GWL_EXSTYLE)), dpi);
+  MONITORINFO monitor{sizeof(monitor)};
+  GetMonitorInfoW(MonitorFromWindow(*this, MONITOR_DEFAULTTONEAREST), &monitor);
+  const auto& work = monitor.rcWork;
+  const int width = (std::min)(size.right - size.left, work.right - work.left - 24L);
+  const int height = (std::min)(size.bottom - size.top, work.bottom - work.top - 24L);
+  MiaoZipLayoutReady = true;
+  SetWindowPos(*this, nullptr, work.left + (work.right - work.left - width) / 2,
+      work.top + (work.bottom - work.top - height) / 2, width, height,
+      SWP_NOZORDER | SWP_NOACTIVATE | SWP_FRAMECHANGED);
+  LayoutMiaoZipForm();
+  // **************** NanaZip Modification End ****************
+#endif
   NormalizePosition();
 
   return CModalDialog::OnInit();
 }
 
 #ifndef Z7_SFX
+// **************** NanaZip Modification Start ****************
+void CExtractDialog::LayoutMiaoZipForm()
+{
+    if (!MiaoZipLayoutReady || MiaoZipLayingOut) return;
+    MiaoZipLayingOut = true;
+    RECT client{}; ::GetClientRect(*this, &client);
+    const auto dpi = MiaoZip::Theme::Dpi(*this);
+    const auto layout = MiaoZip::Dialogs::ArrangeExtraction(
+        MulDiv(client.right, 96, dpi), MulDiv(client.bottom, 96, dpi));
+    MiaoZipScroll = (std::clamp<int>)(MiaoZipScroll, 0, layout.ScrollMaximum);
+    SCROLLINFO scroll{sizeof(scroll), SIF_RANGE | SIF_PAGE | SIF_POS};
+    scroll.nMax = layout.ContentHeight - 1;
+    scroll.nPage = layout.ViewportHeight;
+    scroll.nPos = MiaoZipScroll;
+    SetScrollInfo(*this, SB_VERT, &scroll, TRUE);
+    for (const auto& item : layout.Items)
+    {
+        const HWND child = GetItem(item.Id);
+        const bool combo = item.Id == IDC_EXTRACT_PATH || item.Id == IDC_EXTRACT_PATH_MODE || item.Id == IDC_EXTRACT_OVERWRITE_MODE;
+        SetWindowPos(child, nullptr, MulDiv(item.X, dpi, 96),
+            MulDiv(item.Y - (item.Footer ? 0 : MiaoZipScroll), dpi, 96), MulDiv(item.Width, dpi, 96),
+            MulDiv(combo ? 240 : item.Height, dpi, 96), SWP_NOZORDER | SWP_NOACTIVATE | SWP_FRAMECHANGED);
+        if (combo) MiaoZip::Dialogs::SetComboHeight(child, MulDiv(item.Height, dpi, 96));
+        if (!item.Footer)
+        {
+            RECT actual{}; ::GetWindowRect(child, &actual);
+            MapWindowPoints(nullptr, *this, reinterpret_cast<POINT*>(&actual), 2);
+            RECT viewport = client; viewport.bottom -= MulDiv(76, dpi, 96);
+            RECT clip{};
+            if (!IntersectRect(&clip, &actual, &viewport)) SetRectEmpty(&clip);
+            else OffsetRect(&clip, -actual.left, -actual.top);
+            auto region = CreateRectRgnIndirect(&clip);
+            if (!SetWindowRgn(child, region, TRUE)) DeleteObject(region);
+        }
+    }
+    MiaoZipLayingOut = false;
+    ::InvalidateRect(*this, nullptr, TRUE);
+}
+
+bool CExtractDialog::OnMessage(UINT message, WPARAM wParam, LPARAM lParam)
+{
+    if (message == WM_GETMINMAXINFO)
+    {
+        auto info = reinterpret_cast<MINMAXINFO*>(lParam);
+        MONITORINFO monitor{sizeof(monitor)};
+        GetMonitorInfoW(MonitorFromWindow(*this, MONITOR_DEFAULTTONEAREST), &monitor);
+        info->ptMinTrackSize = {
+            (std::min<LONG>)(MiaoZip::Theme::Scale(*this, 500), monitor.rcWork.right - monitor.rcWork.left - 24),
+            (std::min<LONG>)(MiaoZip::Theme::Scale(*this, 400), monitor.rcWork.bottom - monitor.rcWork.top - 24)};
+        return true;
+    }
+    if (MiaoZipLayoutReady && (message == WM_SIZE || message == WM_APP + 0x2b1)) LayoutMiaoZipForm();
+    if (MiaoZipLayoutReady && message == WM_MOUSEWHEEL)
+    {
+        MiaoZipScroll -= GET_WHEEL_DELTA_WPARAM(wParam) * 48 / WHEEL_DELTA;
+        LayoutMiaoZipForm(); return true;
+    }
+    if (MiaoZipLayoutReady && message == WM_VSCROLL)
+    {
+        switch (LOWORD(wParam))
+        {
+        case SB_LINEUP: MiaoZipScroll -= 32; break;
+        case SB_LINEDOWN: MiaoZipScroll += 32; break;
+        case SB_PAGEUP: MiaoZipScroll -= 180; break;
+        case SB_PAGEDOWN: MiaoZipScroll += 180; break;
+        case SB_THUMBTRACK:
+        { SCROLLINFO info{sizeof(info), SIF_TRACKPOS}; GetScrollInfo(*this, SB_VERT, &info); MiaoZipScroll = info.nTrackPos; break; }
+        default: break;
+        }
+        LayoutMiaoZipForm(); return true;
+    }
+    if (MiaoZipLayoutReady && message == WM_COMMAND &&
+        (HIWORD(wParam) == EN_SETFOCUS || HIWORD(wParam) == BN_SETFOCUS || HIWORD(wParam) == CBN_SETFOCUS))
+    {
+        const int id = LOWORD(wParam);
+        if (id != IDOK && id != IDCANCEL)
+        {
+            RECT focused{}; ::GetWindowRect(reinterpret_cast<HWND>(lParam), &focused);
+            MapWindowPoints(nullptr, *this, reinterpret_cast<POINT*>(&focused), 2);
+            RECT client{}; ::GetClientRect(*this, &client);
+            const auto dpi = MiaoZip::Theme::Dpi(*this);
+            const int top = MulDiv(focused.top, 96, dpi), bottom = MulDiv(focused.bottom, 96, dpi);
+            const int edge = MulDiv(client.bottom, 96, dpi) - 84;
+            if (top < 16) MiaoZipScroll += top - 16;
+            else if (bottom > edge) MiaoZipScroll += bottom - edge;
+            LayoutMiaoZipForm();
+        }
+    }
+    return CModalDialog::OnMessage(message, wParam, lParam);
+}
+// **************** NanaZip Modification End ****************
+
 void CExtractDialog::UpdateMiaoZipOrganization(bool rememberManual)
 {
   const bool organize = IsButtonCheckedBool(IDX_MIAOZIP_ORGANIZE);
@@ -347,6 +472,8 @@ void AddUniqueString(UStringVector &list, const UString &s)
 void CExtractDialog::OnOK()
 {
   #ifndef Z7_SFX
+  ExitAfterExtraction = IsButtonCheckedBool(IDX_MIAOZIP_EXIT);
+  MiaoZip::Extraction::SaveExitAfterExtraction(ExitAfterExtraction);
   SmartExtract.Def = true;
   SmartExtract.Val = IsButtonCheckedBool(IDX_MIAOZIP_ORGANIZE);
   MiaoZip::Extraction::SaveOrganizeOuterFolder(SmartExtract.Val);

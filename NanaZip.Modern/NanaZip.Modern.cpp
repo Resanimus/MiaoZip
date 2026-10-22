@@ -21,6 +21,7 @@
 #include "InformationPage.h"
 #include "ProgressPage.h"
 #include "CopyLocationPage.h"
+#include "../MiaoZip.Features/Theme.h"
 
 #pragma comment(lib, "comctl32.lib")
 
@@ -198,6 +199,23 @@ namespace
 
             switch (uMsg)
             {
+            case WM_GETMINMAXINFO:
+            {
+                auto info = reinterpret_cast<MINMAXINFO*>(lParam);
+                MONITORINFO monitor{sizeof(monitor)};
+                ::GetMonitorInfoW(::MonitorFromWindow(hWnd, MONITOR_DEFAULTTONEAREST), &monitor);
+                info->ptMinTrackSize = {
+                    (std::min<LONG>)(MiaoZip::Theme::Scale(hWnd, 480), monitor.rcWork.right - monitor.rcWork.left - 24),
+                    (std::min<LONG>)(MiaoZip::Theme::Scale(hWnd, 320), monitor.rcWork.bottom - monitor.rcWork.top - 24)};
+                return 0;
+            }
+            case WM_DPICHANGED:
+            {
+                auto rect = reinterpret_cast<RECT*>(lParam);
+                ::SetWindowPos(hWnd, nullptr, rect->left, rect->top, rect->right - rect->left,
+                    rect->bottom - rect->top, SWP_NOZORDER | SWP_NOACTIVATE);
+                break;
+            }
             case WM_CLOSE:
             {
                 HWND ParentWindow = ::GetWindow(hWnd, GW_OWNER);
@@ -223,34 +241,24 @@ namespace
             ::DestroyWindow(WindowHandle);
             return nullptr;
         }
+        MiaoZip::Theme::Reload();
+        const auto palette = MiaoZip::Theme::Colors();
+        const BOOL dark = MiaoZip::Theme::IsDark();
+        const DWM_SYSTEMBACKDROP_TYPE backdrop = DWMSBT_NONE;
+        const DWM_WINDOW_CORNER_PREFERENCE corner = DWMWCP_ROUND;
+        ::DwmSetWindowAttribute(WindowHandle, DWMWA_USE_IMMERSIVE_DARK_MODE, &dark, sizeof(dark));
+        ::DwmSetWindowAttribute(WindowHandle, DWMWA_CAPTION_COLOR, &palette.Chrome, sizeof(palette.Chrome));
+        ::DwmSetWindowAttribute(WindowHandle, DWMWA_TEXT_COLOR, &palette.Text, sizeof(palette.Text));
+        ::DwmSetWindowAttribute(WindowHandle, DWMWA_SYSTEMBACKDROP_TYPE, &backdrop, sizeof(backdrop));
+        ::DwmSetWindowAttribute(WindowHandle, DWMWA_WINDOW_CORNER_PREFERENCE, &corner, sizeof(corner));
+        MARGINS margins{}; ::DwmExtendFrameIntoClientArea(WindowHandle, &margins);
         return WindowHandle;
     }
 
-    HWND K7ModernCreateXamlDialog(
-        _In_opt_ HWND ParentWindowHandle)
+    HWND K7ModernCreateXamlDialog(HWND ParentWindowHandle)
     {
-        HWND WindowHandle = ::K7ModernCreateXamlWindow(
-            ParentWindowHandle,
-            WS_EX_STATICEDGE | WS_EX_DLGMODALFRAME,
-            WS_CAPTION | WS_SYSMENU);
-
-        MILE_WINDOW_SYSTEM_BACKDROP_TYPE SystemBackdropType =
-            MILE_WINDOW_SYSTEM_BACKDROP_TYPE_AUTO;
-        if (S_OK == ::MileGetWindowSystemBackdropTypeAttribute(
-            WindowHandle,
-            &SystemBackdropType))
-        {
-            if (MILE_WINDOW_SYSTEM_BACKDROP_TYPE_AUTO != SystemBackdropType &&
-                MILE_WINDOW_SYSTEM_BACKDROP_TYPE_NONE != SystemBackdropType)
-            {
-                const COLORREF IgnoreAccentColor = static_cast<COLORREF>(-2);
-                ::MileSetWindowCaptionColorAttribute(
-                    WindowHandle,
-                    IgnoreAccentColor);
-            }
-        }
-
-        return WindowHandle;
+        return K7ModernCreateXamlWindow(ParentWindowHandle, WS_EX_DLGMODALFRAME,
+            WS_CAPTION | WS_SYSMENU | WS_THICKFRAME);
     }
 
     int K7ModernShowXamlWindow(
@@ -290,14 +298,19 @@ namespace
             }
         }
 
+        MONITORINFO monitor{sizeof(monitor)};
+        ::GetMonitorInfoW(::MonitorFromWindow(WindowHandle, MONITOR_DEFAULTTONEAREST), &monitor);
+        const RECT work = monitor.rcWork;
+        ScaledWidth = (std::min)(ScaledWidth, static_cast<int>(work.right - work.left - 24));
+        ScaledHeight = (std::min)(ScaledHeight, static_cast<int>(work.bottom - work.top - 24));
         int ParentWidth = ParentRect.right - ParentRect.left;
         int ParentHeight = ParentRect.bottom - ParentRect.top;
 
         ::SetWindowPos(
             WindowHandle,
             nullptr,
-            ParentRect.left + ((ParentWidth - ScaledWidth) / 2),
-            ParentRect.top + ((ParentHeight - ScaledHeight) / 2),
+            (std::clamp<int>)(ParentRect.left + ((ParentWidth - ScaledWidth) / 2), static_cast<int>(work.left), static_cast<int>(work.right - ScaledWidth)),
+            (std::clamp<int>)(ParentRect.top + ((ParentHeight - ScaledHeight) / 2), static_cast<int>(work.top), static_cast<int>(work.bottom - ScaledHeight)),
             ScaledWidth,
             ScaledHeight,
             SWP_NOZORDER | SWP_NOACTIVATE);
@@ -320,7 +333,7 @@ namespace
             return -1;
         }
 
-        ::MileAllowNonClientDefaultDrawingForWindow(WindowHandle, FALSE);
+        ::MileAllowNonClientDefaultDrawingForWindow(WindowHandle, TRUE);
 
         HMENU MenuHandle = ::GetSystemMenu(WindowHandle, FALSE);
         if (MenuHandle)
@@ -412,8 +425,8 @@ EXTERN_C INT WINAPI K7ModernShowAboutDialog(
 
     int Result = ::K7ModernShowXamlDialog(
         WindowHandle,
-        480,
-        320,
+        560,
+        400,
         winrt::get_abi(Window),
         ParentWindowHandle);
 
@@ -523,7 +536,7 @@ EXTERN_C INT WINAPI K7ModernShowProgressWindow(
         return -1;
     }
 
-    ::MileAllowNonClientDefaultDrawingForWindow(WindowHandle, FALSE);
+    ::MileAllowNonClientDefaultDrawingForWindow(WindowHandle, TRUE);
 
     using Interface =
         winrt::NanaZip::Modern::ProgressPage;
@@ -558,8 +571,8 @@ EXTERN_C INT WINAPI K7ModernShowProgressWindow(
 
     int Result = ::K7ModernShowXamlWindow(
         WindowHandle,
-        600,
-        360,
+        640,
+        488,
         ParentWindowHandle);
 
     return Result;
@@ -612,8 +625,8 @@ EXTERN_C INT WINAPI K7ModernShowCopyLocationDialog(
 
     int Result = ::K7ModernShowXamlDialog(
         WindowHandle,
-        600,
-        400,
+        640,
+        440,
         winrt::get_abi(Window),
         ParentWindowHandle);
 

@@ -1052,7 +1052,7 @@ bool CProgressDialog::ModernExternalCloseMessage()
     {
         this->MessagesDisplayed = true;
 
-        if (!FinalMessage.OkMessage.Message.IsEmpty())
+        if (!AutoCloseOnSuccess && !FinalMessage.OkMessage.Message.IsEmpty())
         {
             ShowMessages = true;
             Title = std::wstring(
@@ -1338,7 +1338,7 @@ bool CProgressDialog::OnExternalCloseMessage()
   {
     MessagesDisplayed = true;
 
-    if (!fm.OkMessage.Message.IsEmpty())
+    if (!AutoCloseOnSuccess && !fm.OkMessage.Message.IsEmpty())
     {
       if (fm.OkMessage.Title.IsEmpty())
         fm.OkMessage.Title = "MiaoZip";

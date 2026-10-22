@@ -1,6 +1,9 @@
 ﻿// Windows/Shell.cpp
 
 #include "StdAfx.h"
+#ifndef UNDER_CE
+#include <K7User.h>
+#endif
 
 /*
 #include <stdio.h>
@@ -183,6 +186,9 @@ bool BrowseForFolder(HWND /* owner */, LPCTSTR /* title */,
 bool BrowseForFolder(LPBROWSEINFO browseInfo, CSysString &resultPath)
 {
   NWindows::NCOM::CComInitializer comInitializer;
+  // **************** NanaZip Modification Start ****************
+  MiaoZip::SystemDialogThemeScope systemTheme;
+  // **************** NanaZip Modification End ****************
   LPITEMIDLIST itemIDList = ::SHBrowseForFolder(browseInfo);
   if (itemIDList == NULL)
     return false;
@@ -289,6 +295,9 @@ static bool BrowseForFolder(LPBROWSEINFOW browseInfo, UString &resultPath)
     ::GetProcAddress(::GetModuleHandleW(L"shell32.dll"), "SHBrowseForFolderW");
   if (!shBrowseForFolderW)
     return false;
+  // **************** NanaZip Modification Start ****************
+  MiaoZip::SystemDialogThemeScope systemTheme;
+  // **************** NanaZip Modification End ****************
   LPITEMIDLIST itemIDList = shBrowseForFolderW(browseInfo);
   if (itemIDList == NULL)
     return false;

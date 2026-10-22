@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 #include "CopyLocationPage.h"
 #include "GlassTheme.h"
 #include <K7User.h>
@@ -46,6 +46,8 @@ namespace winrt::NanaZip::Modern::implementation
         this->PathTextBox().Text(this->m_InitialPath);
         this->OrganizeOuterFolderCheck().IsChecked(MiaoZip::Extraction::OrganizeOuterFolder());
         this->OrganizeOuterFolderCheck().Visibility(this->m_ShowExtractAll ? winrt::Visibility::Visible : winrt::Visibility::Collapsed);
+        this->ExitAfterExtractionCheck().IsChecked(MiaoZip::Extraction::ExitAfterExtraction());
+        this->ExitAfterExtractionCheck().Visibility(this->m_ShowExtractAll ? winrt::Visibility::Visible : winrt::Visibility::Collapsed);
         this->ExtractAllButton().Visibility(this->m_ShowExtractAll
             ? winrt::Visibility::Visible : winrt::Visibility::Collapsed);
     }
@@ -63,7 +65,11 @@ namespace winrt::NanaZip::Modern::implementation
         UNREFERENCED_PARAMETER(sender);
         UNREFERENCED_PARAMETER(e);
 
-        if (this->m_ShowExtractAll) MiaoZip::Extraction::SaveOrganizeOuterFolder(this->OrganizeOuterFolderCheck().IsChecked().Value());
+        if (this->m_ShowExtractAll)
+        {
+            MiaoZip::Extraction::SaveOrganizeOuterFolder(this->OrganizeOuterFolderCheck().IsChecked().Value());
+            MiaoZip::Extraction::SaveExitAfterExtraction(this->ExitAfterExtractionCheck().IsChecked().Value());
+        }
         ::SendMessageW(
             this->m_WindowHandle,
             WM_COMMAND,
@@ -80,7 +86,11 @@ namespace winrt::NanaZip::Modern::implementation
         UNREFERENCED_PARAMETER(sender);
         UNREFERENCED_PARAMETER(e);
 
-        if (this->m_ShowExtractAll) MiaoZip::Extraction::SaveOrganizeOuterFolder(this->OrganizeOuterFolderCheck().IsChecked().Value());
+        if (this->m_ShowExtractAll)
+        {
+            MiaoZip::Extraction::SaveOrganizeOuterFolder(this->OrganizeOuterFolderCheck().IsChecked().Value());
+            MiaoZip::Extraction::SaveExitAfterExtraction(this->ExitAfterExtractionCheck().IsChecked().Value());
+        }
         ::SendMessageW(
             this->m_WindowHandle,
             WM_COMMAND,

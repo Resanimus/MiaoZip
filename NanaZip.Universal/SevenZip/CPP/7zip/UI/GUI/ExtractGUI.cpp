@@ -1,6 +1,8 @@
 ﻿// ExtractGUI.cpp
 
 #include "StdAfx.h"
+#include "../../../../../../MiaoZip.Features/ExtractionPreferences.h"
+#include "../../../../../../MiaoZip.Features/ExtractionCompletion.h"
 
 #include "../../../Common/IntToString.h"
 #include "../../../Common/StringConvert.h"
@@ -217,6 +219,10 @@ HRESULT ExtractGUI(
     HWND hwndParent)
 {
   messageWasDisplayed = false;
+  // **************** NanaZip Modification Start ****************
+  const auto miaoZipOwner = MiaoZip::Extraction::FindExtractionOwner(hwndParent);
+  bool miaoZipExit = MiaoZip::Extraction::ExitAfterExtraction();
+  // **************** NanaZip Modification End ****************
 
   CThreadExtracting extracter;
   /*
@@ -277,6 +283,9 @@ HRESULT ExtractGUI(
       if (dialog.Create(hwndParent) != IDOK)
         return E_ABORT;
 
+      #ifndef Z7_SFX
+      miaoZipExit = dialog.ExitAfterExtraction;
+      #endif
       outputDir = us2fs(dialog.DirPath);
 
       options.OverwriteMode = dialog.OverwriteMode;
@@ -352,6 +361,12 @@ HRESULT ExtractGUI(
   #endif
 
   extracter.IconID = IDI_ICON;
+  // Hash summaries carry results and must still be displayed.
+  #ifndef Z7_SFX
+  extracter.AutoCloseOnSuccess = hb == nullptr;
+  #else
+  extracter.AutoCloseOnSuccess = true;
+  #endif
 
   RINOK(extracter.Create(title, hwndParent))
   messageWasDisplayed = extracter.ThreadFinishedOK && extracter.MessagesDisplayed;
@@ -384,5 +399,13 @@ HRESULT ExtractGUI(
   }
 #endif
   // **************** 7-Zip ZS Modification End ****************
+  // **************** NanaZip Modification Start ****************
+  bool miaoZipMessages = false;
+  { NSynchronization::CCriticalSectionLock lock(extracter.Sync._cs);
+    miaoZipMessages = !extracter.Sync.Messages.IsEmpty() || !extracter.Sync.FinalMessage.ErrorMessage.Message.IsEmpty(); }
+  if (MiaoZip::Extraction::ShouldExitAfterExtraction(miaoZipExit, options.TestMode,
+      extracter.Result == S_OK, extractCallback->IsOK(), miaoZipMessages))
+      MiaoZip::Extraction::RequestOwnerClose(miaoZipOwner);
+  // **************** NanaZip Modification End ****************
   return extracter.Result;
 }

@@ -259,6 +259,7 @@ struct CCopyToOptions
   bool includeAltStreams;
   bool replaceAltStreamChars;
   bool showErrorMessages;
+  bool CompletedWithoutErrors = false;
 
   bool NeedRegistryZone;
   NExtract::NZoneIdMode::EEnum ZoneIdMode;
@@ -912,6 +913,7 @@ public:
   void Post_Refresh_StatusBar();
   void Refresh_StatusBar();
 
+  void CreateArchive();
   void AddToArchive();
   // **************** NanaZip Modification Start ****************
   void AddToExistingArchive();

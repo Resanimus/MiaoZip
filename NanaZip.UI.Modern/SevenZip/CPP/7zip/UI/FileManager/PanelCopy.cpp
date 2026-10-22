@@ -317,6 +317,8 @@ HRESULT CPanel::CopyTo(CCopyToOptions &options, const CRecordVector<UInt32> &ind
   // res = extracter.Result2;
   res = extracter.Result;
 
+  options.CompletedWithoutErrors = res == S_OK && extracter.ExtractCallbackSpec->IsOK()
+      && extracter.Sync.Messages.IsEmpty() && extracter.Sync.FinalMessage.ErrorMessage.Message.IsEmpty();
   if (res == S_OK && extracter.ExtractCallbackSpec->IsOK())
   {
     usePassword = extracter.ExtractCallbackSpec->PasswordIsDefined;

@@ -265,6 +265,7 @@ public:
 
   // **************** NanaZip Modification Start ****************
   bool m_FirstRun = true;
+  bool AutoCloseOnSuccess = false;
   void ModernPause();
   void ModernUpdateStatus();
   bool ModernExternalCloseMessage();

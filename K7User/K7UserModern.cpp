@@ -1,4 +1,4 @@
-/*
+﻿/*
  * PROJECT:    NanaZip Platform User Library (K7User)
  * FILE:       K7UserModern.cpp
  * PURPOSE:    Implementation for NanaZip Platform User Modern Experiences
@@ -10,6 +10,7 @@
  */
 
 #include "K7UserPrivate.h"
+#include "../MiaoZip.Features/NativeDialogSurface.h"
 
 #include <Mile.Helpers.CppBase.h>
 
@@ -50,6 +51,8 @@ EXTERN_C int WINAPI K7UserModernMessageBoxW(
     _In_opt_ LPCWSTR lpCaption,
     _In_ UINT uType)
 {
+    // Windows owns the layout of both TaskDialog and the MessageBox fallback.
+    MiaoZip::Dialogs::NativeLayoutScope nativeLayout;
     if (uType != (uType & (MB_ICONMASK | MB_TYPEMASK)))
     {
         return ::OriginalMessageBoxW(hWnd, lpText, lpCaption, uType);

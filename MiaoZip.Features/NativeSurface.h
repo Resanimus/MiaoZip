@@ -189,7 +189,16 @@ namespace MiaoZip::Theme
         }
         if ((item.itemState & ODS_FOCUS) && GetFocus() == list &&
             !(SendMessageW(list, WM_QUERYUISTATE, 0, 0) & UISF_HIDEFOCUS))
-            DrawFocusRect(dc, &highlight);
+        {
+            RECT focus = highlight;
+            InflateRect(&focus, -Scale(list, 1), -Scale(list, 1));
+            auto pen = CreatePen(PS_SOLID, (std::max)(1, Scale(list, 1)), colors.Accent);
+            auto oldPen = SelectObject(dc, pen);
+            auto oldBrush = SelectObject(dc, GetStockObject(HOLLOW_BRUSH));
+            RoundRect(dc, focus.left, focus.top, focus.right, focus.bottom,
+                Scale(list, 8), Scale(list, 8));
+            SelectObject(dc, oldBrush); SelectObject(dc, oldPen); DeleteObject(pen);
+        }
         RestoreDC(dc, saved);
     }
 }
