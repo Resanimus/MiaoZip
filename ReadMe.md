@@ -6,9 +6,9 @@
 
 A native Windows file archiver based on NanaZip and 7-Zip, with an acrylic interface and small-document editing inside archives.
 
-**[下载最新版](https://github.com/Resanimus/MiaoZip/releases/latest)** · [构建说明](Documents/MiaoZip/BUILDING.md) · [本次界面更新与验证](docs/UI-20261022-fix1.md) · [上游来源与许可](NOTICE-MiaoZip.md)
+**[下载最新版](https://github.com/Resanimus/MiaoZip/releases/latest)** · [构建说明](Documents/MiaoZip/BUILDING.md) · [界面改造记录](docs/UI-20261022-fix1.md) · [上游来源与许可](NOTICE-MiaoZip.md)
 
-当前版本：**v1.0 · UI20261022-fix1**。二级窗口、菜单和进度界面已统一样式；修复填色按钮边缘及添加窗口首次显示闪现。
+当前版本为 **v1.0 · UI20261119**。选项页的复选框和单选按钮已做平滑处理，包内编辑的单文件上限提高到 128 MiB。
 
 ![MiaoZip 深色界面](Documents/MiaoZip/Images/MainWindowDark.jpg)
 
@@ -22,7 +22,7 @@ A native Windows file archiver based on NanaZip and 7-Zip, with an acrylic inter
 
 ## 下载与使用
 
-1. 从 [最新 Release](https://github.com/Resanimus/MiaoZip/releases/latest) 下载 `MiaoZip-1.0-UI20261022-fix1-x64.zip`。
+1. 从 [最新 Release](https://github.com/Resanimus/MiaoZip/releases/latest) 下载文件名以 `-x64.zip` 结尾的 Windows 程序包。
 2. 完整解压到一个独立文件夹，保留相邻的 DLL、语言及资源文件。
 3. 运行 **`MiaoZip.exe`**，打开压缩包即可使用。
 
