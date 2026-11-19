@@ -7,15 +7,29 @@
 using namespace MiaoZip;
 void require(bool value, const char* message) { if (!value) throw std::runtime_error(message); }
 void write(const fs::path& file, const std::string& text) { std::ofstream output(file, std::ios::binary | std::ios::trunc); output << text; output.close(); }
-std::optional<LiveEdit::Commit> waitReady()
+std::optional<LiveEdit::Commit> waitReady(unsigned retries = 75)
 {
-    for (unsigned i = 0; i < 75; ++i)
+    for (unsigned i = 0; i < retries; ++i)
     {
         auto item = LiveEdit::TakeReady(); if (item) return item;
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
     return {};
 }
+
+static void WriteSizedDocument(const fs::path& path, unsigned long long size, char lastByte)
+{
+    Handle file(CreateFileW(path.c_str(), GENERIC_WRITE, FILE_SHARE_READ,
+        nullptr, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr));
+    require(static_cast<bool>(file), "open synthetic large document");
+    LARGE_INTEGER target;
+    target.QuadPart = static_cast<LONGLONG>(size - 1);
+    DWORD written = 0;
+    require(SetFilePointerEx(file.Value, target, nullptr, FILE_BEGIN) &&
+        WriteFile(file.Value, &lastByte, 1, &written, nullptr) && written == 1,
+        "write synthetic large document");
+}
+
 int wmain(int argc, wchar_t** argv)
 {
     try
@@ -63,6 +77,45 @@ int wmain(int argc, wchar_t** argv)
         LiveEdit::SetEnabled(true);
         auto atomic=waitReady();require(atomic.has_value() && atomic->Hash==HashFile(atomicDoc),"Office save with no child process");
         LiveEdit::Complete(*atomic,E_ABORT,L"");
+
+        const auto largeArchive = root / L"large.zip";
+        write(largeArchive, "original large archive");
+        const auto largeSession = LiveEdit::CreateSessionDirectory();
+        require(!largeSession.empty(), "large document recovery directory");
+        const auto largeDocument = largeSession / L"large.txt";
+        WriteSizedDocument(largeDocument, DocumentLimit, 'a');
+        require(LiveEdit::Add(largeArchive.wstring(), L"large.txt", largeDocument, HashFile(largeArchive)),
+            "a document at the new size limit is editable");
+        const auto previousTimestamp = fs::last_write_time(largeDocument);
+        WriteSizedDocument(largeDocument, DocumentLimit, 'b');
+        fs::last_write_time(largeDocument, previousTimestamp);
+        auto large = waitReady(180);
+        require(large && fs::file_size(large->Snapshot) == DocumentLimit &&
+            HashFile(large->Snapshot) == HashFile(largeDocument),
+            "same-size large save with unchanged last-write timestamp reaches a verified snapshot");
+        const auto largeCandidate = root / L"large-generation.zip";
+        write(largeCandidate, "updated large archive");
+        SafeUpdateContext largeContext{large->ArchiveHash, large->Backup, {}};
+        require(ReplaceArchive(largeArchive, largeCandidate, largeContext) == S_OK, "commit large document");
+        LiveEdit::Complete(*large, S_OK, largeContext.Candidate);
+        WriteSizedDocument(largeDocument, DocumentLimit + 1, 'c');
+        const auto stableArchive = HashFile(largeArchive);
+        const auto manifest = largeSession / L"session.ini";
+        std::wstring phase;
+        for (unsigned i = 0; i < 80 && phase != L"paused-size"; ++i)
+        {
+            require(!LiveEdit::TakeReady(), "oversized document was queued for writeback");
+            wchar_t state[64]{};
+            GetPrivateProfileStringW(L"MiaoZip", L"State", L"", state, 64, manifest.c_str());
+            phase = state;
+            if (phase != L"paused-size") std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        }
+        require(phase == L"paused-size" && HashFile(largeArchive) == stableArchive &&
+            fs::file_size(largeDocument) == DocumentLimit + 1,
+            "over-limit save pauses and preserves archive and work copy");
+        require(!LiveEdit::Add(largeArchive.wstring(), L"second.txt", largeDocument, stableArchive),
+            "a new session rejects a document greater than the size limit");
+        std::cout << "PASS 128 MiB document boundary, unchanged-timestamp save, overflow recovery\n";
         LiveEdit::Shutdown();
         require(fs::exists(session/L"session.ini") && fs::exists(atomicDoc),"shutdown preserves recovery");
         std::cout << "PASS repeated saves, in-flight generation, pause, Office replacement, recovery on failure and close\n";

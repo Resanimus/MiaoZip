@@ -11,6 +11,9 @@ namespace MiaoZip::LiveEdit
 {
     namespace
     {
+        constexpr ULONGLONG SaveQuietTimeMs = 2000;
+        constexpr ULONGLONG ContentCheckIntervalMs = 60000;
+
         struct Session
         {
             Commit Item;
@@ -18,7 +21,81 @@ namespace MiaoZip::LiveEdit
             std::vector<fs::path> Backups;
             ULONGLONG ChangedAt = 0;
             bool Ready = false, InFlight = false, Failed = false;
+            // Only the worker reads or rearms this watch after Add publishes the session.
+            HANDLE DirectoryWatch = INVALID_HANDLE_VALUE;
+            ULONGLONG LastContentCheck = 0;
+
+            ~Session()
+            {
+                if (DirectoryWatch != INVALID_HANDLE_VALUE)
+                    FindCloseChangeNotification(DirectoryWatch);
+            }
+
+            bool DirectoryChanged()
+            {
+                if (DirectoryWatch == INVALID_HANDLE_VALUE) return true;
+                const DWORD wait = WaitForSingleObject(DirectoryWatch, 0);
+                if (wait == WAIT_TIMEOUT) return false;
+                if (wait != WAIT_OBJECT_0 || !FindNextChangeNotification(DirectoryWatch))
+                {
+                    FindCloseChangeNotification(DirectoryWatch);
+                    DirectoryWatch = INVALID_HANDLE_VALUE;
+                }
+                return true;
+            }
         };
+
+        enum class ScanError { None, Link, TooLarge, Recovery };
+
+        struct DocumentScan
+        {
+            std::wstring Hash;
+            fs::path Snapshot;
+            ScanError Error = ScanError::None;
+        };
+
+        DocumentScan ScanDocument(Session& session, const std::wstring& observed,
+            bool pending, bool snapshotDue)
+        {
+            const fs::path path = session.Item.WorkingFile;
+            const DWORD attributes = GetFileAttributesW(path.c_str());
+            if (attributes != INVALID_FILE_ATTRIBUTES && (attributes & FILE_ATTRIBUTE_REPARSE_POINT))
+                return { {}, {}, ScanError::Link };
+
+            // Check the size even if no directory event was delivered, and
+            // keep polling while a save is pending or a read must be retried.
+            std::error_code error;
+            const auto size = fs::file_size(path, error);
+            if (error)
+            {
+                session.LastContentCheck = 0;
+                return {};
+            }
+            if (size > DocumentLimit) return { {}, {}, ScanError::TooLarge };
+            const bool changed = session.DirectoryChanged();
+            const auto now = GetTickCount64();
+            if (!changed && !pending && session.LastContentCheck != 0 &&
+                now - session.LastContentCheck < ContentCheckIntervalMs)
+                return {};
+
+            session.LastContentCheck = 0;
+            DocumentScan scan;
+            scan.Hash = HashFile(path, DocumentLimit);
+            if (scan.Hash.empty()) return scan;
+            session.LastContentCheck = now;
+            if (!snapshotDue || scan.Hash != observed) return scan;
+
+            const auto snapshot = path.parent_path() / (L".miaozip-snapshot-" + NewId());
+            if (!CopyFileW(path.c_str(), snapshot.c_str(), TRUE)) return scan;
+            if (HashFile(snapshot, DocumentLimit) != scan.Hash || HashFile(path, DocumentLimit) != scan.Hash)
+            {
+                DeleteFileW(snapshot.c_str());
+                return scan;
+            }
+            scan.Snapshot = snapshot;
+            return scan;
+        }
+
         void Journal(const Session& session, const std::wstring& state)
         {
             const fs::path path = fs::path(session.Item.WorkingFile).parent_path();
@@ -47,6 +124,7 @@ namespace MiaoZip::LiveEdit
             std::condition_variable Wake;
             std::vector<std::unique_ptr<Session>> Sessions;
             bool Stop = false;
+            unsigned EnableGeneration = 0;
             std::thread Worker;
             State() : Worker([this] { Run(); }) {}
             ~State() { Close(); }
@@ -64,41 +142,58 @@ namespace MiaoZip::LiveEdit
                     Wake.wait_for(lock, std::chrono::milliseconds(1000));
                     if (Stop) break;
                     if (!Enabled) continue;
-                    for (auto& pointer : Sessions)
+                    for (size_t i = 0; !Stop && Enabled && i < Sessions.size(); ++i)
                     {
-                        auto& session = *pointer;
+                        // Sessions are not removed while the worker is alive.
+                        auto& session = *Sessions[i];
                         if (session.Ready || session.InFlight || session.Failed) continue;
                         try
                         {
-                            std::error_code error;
-                            const DWORD attributes = GetFileAttributesW(session.Item.WorkingFile.c_str());
-                            if (attributes != INVALID_FILE_ATTRIBUTES && (attributes & FILE_ATTRIBUTE_REPARSE_POINT))
+                            const auto generation = EnableGeneration;
+                            const auto observed = session.Observed;
+                            const bool pending = observed != session.Committed;
+                            const bool snapshotDue = pending && !observed.empty() &&
+                                GetTickCount64() - session.ChangedAt >= SaveQuietTimeMs;
+                            DocumentScan scan;
+                            // Large reads and snapshot copies must not hold up
+                            // the UI's status, pause or ready-session queries.
+                            lock.unlock();
+                            try { scan = ScanDocument(session, observed, pending, snapshotDue); }
+                            catch (...) { scan.Error = ScanError::Recovery; }
+                            lock.lock();
+                            if (Stop || !Enabled || generation != EnableGeneration)
                             {
-                                session.Failed = true; session.Error = L"工作副本变为链接，已暂停同步";
-                                Journal(session, L"paused-link"); continue;
+                                if (!scan.Snapshot.empty()) DeleteFileW(scan.Snapshot.c_str());
+                                continue;
                             }
-                            const auto size = fs::file_size(session.Item.WorkingFile, error);
-                            if (error) continue; // An atomic editor save can temporarily remove the path.
-                            if (size > DocumentLimit)
+                            if (scan.Error != ScanError::None)
                             {
-                                session.Failed = true; session.Error = L"文档已超过 20 MiB，已暂停同步";
-                                Journal(session, L"paused-size"); continue;
+                                session.Failed = true;
+                                if (scan.Error == ScanError::Link)
+                                {
+                                    session.Error = L"工作副本变为链接，已暂停同步";
+                                    Journal(session, L"paused-link");
+                                }
+                                else if (scan.Error == ScanError::TooLarge)
+                                {
+                                    session.Error = L"文档已超过 " + std::to_wstring(DocumentLimitMiB) + L" MiB，已暂停同步";
+                                    Journal(session, L"paused-size");
+                                }
+                                else session.Error = L"恢复文件不可写，已暂停同步";
+                                continue;
                             }
-                            auto hash = HashFile(session.Item.WorkingFile);
-                            if (hash.empty()) continue;
-                            if (hash == session.Committed) { session.Observed = hash; continue; }
-                            if (hash != session.Observed)
+                            if (!scan.Snapshot.empty())
                             {
-                                session.Observed = hash; session.ChangedAt = GetTickCount64(); continue;
+                                session.Item.Snapshot = scan.Snapshot.wstring();
+                                session.Item.Hash = scan.Hash;
+                                session.Ready = true;
+                                Journal(session, L"pending");
                             }
-                            if (GetTickCount64() - session.ChangedAt < 2000) continue;
-                            auto snapshot = fs::path(session.Item.WorkingFile).parent_path() / (L".miaozip-snapshot-" + NewId());
-                            if (!CopyFileW(session.Item.WorkingFile.c_str(), snapshot.c_str(), TRUE)) continue;
-                            if (HashFile(snapshot) != hash || HashFile(session.Item.WorkingFile) != hash)
-                            { DeleteFileW(snapshot.c_str()); continue; }
-                            session.Item.Snapshot = snapshot.wstring(); session.Item.Hash = hash;
-                            session.Ready = true;
-                            Journal(session, L"pending");
+                            if (!scan.Hash.empty() && scan.Hash != session.Observed)
+                            {
+                                session.Observed = std::move(scan.Hash);
+                                session.ChangedAt = GetTickCount64();
+                            }
                         }
                         catch (...) { session.Failed = true; session.Error = L"恢复文件不可写，已暂停同步"; }
                     }
@@ -128,8 +223,10 @@ namespace MiaoZip::LiveEdit
     bool Enabled() { return Get().Enabled; }
     void SetEnabled(bool enabled)
     {
-        auto& state = Get(); state.Enabled = enabled;
+        auto& state = Get();
         { std::lock_guard lock(state.Mutex);
+          state.Enabled = enabled;
+          ++state.EnableGeneration;
           for (auto& session : state.Sessions)
           {
               if (!enabled && !session->InFlight) { session->Ready = false; session->Observed.clear(); }
@@ -155,7 +252,11 @@ namespace MiaoZip::LiveEdit
         auto session = std::make_unique<Session>();
         session->Item.Id = NewId(); session->Item.Archive = archive; session->Item.Entry = entry;
         session->Item.WorkingFile = workingFile.wstring(); session->Item.ArchiveHash = archiveHash;
-        session->Committed = HashFile(workingFile); session->Observed = session->Committed;
+        session->DirectoryWatch = FindFirstChangeNotificationW(workingFile.parent_path().c_str(), FALSE,
+            FILE_NOTIFY_CHANGE_FILE_NAME | FILE_NOTIFY_CHANGE_ATTRIBUTES |
+            FILE_NOTIFY_CHANGE_SIZE | FILE_NOTIFY_CHANGE_LAST_WRITE);
+        session->Committed = HashFile(workingFile, DocumentLimit);
+        session->Observed = session->Committed;
         if (session->Committed.empty()) return false;
         session->Item.Backup = archive + L".miaozip-" + session->Item.Id + L".bak";
         Journal(*session, L"watching");
@@ -231,7 +332,7 @@ namespace MiaoZip::LiveEdit
         if (!state.Enabled) return state.Sessions.empty() ? L"" : L"编辑已暂停 · 恢复文件已保留";
         for (auto& session : state.Sessions)
             if (session->Ready || session->Observed != session->Committed) return L"等待文档保存稳定…";
-        return state.Sessions.empty() ? L"包内编辑已开启 · 双击小文档开始" : L"包内编辑：已同步 · " + std::to_wstring(state.Sessions.size()) + L" 个工作副本";
+        return state.Sessions.empty() ? L"包内编辑已开启 · 双击文档开始" : L"包内编辑：已同步 · " + std::to_wstring(state.Sessions.size()) + L" 个工作副本";
     }
     size_t Count() { auto& state = Get(); std::lock_guard lock(state.Mutex); return state.Sessions.size(); }
     void Shutdown() { Get().Close(); }

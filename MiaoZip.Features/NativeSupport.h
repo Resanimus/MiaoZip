@@ -1,5 +1,6 @@
 ﻿// MiaoZip native file transactions. Original code, MIT licensed.
 #pragma once
+#include "LiveEditLimits.h"
 #include <windows.h>
 #include <objbase.h>
 #include <bcrypt.h>
@@ -11,8 +12,6 @@
 namespace MiaoZip
 {
     namespace fs = std::filesystem;
-    constexpr unsigned long long DocumentLimit = 20ull * 1024 * 1024;
-    constexpr unsigned long long ArchiveLimit = 256ull * 1024 * 1024;
 
     struct Handle
     {
@@ -24,7 +23,7 @@ namespace MiaoZip
         explicit operator bool() const { return Value && Value != INVALID_HANDLE_VALUE; }
     };
 
-    inline std::wstring HashHandle(HANDLE file)
+    inline std::wstring HashHandle(HANDLE file, unsigned long long bytesRemaining = ~0ull)
     {
         LARGE_INTEGER zero{};
         if (!SetFilePointerEx(file, zero, nullptr, FILE_BEGIN)) return {};
@@ -41,6 +40,8 @@ namespace MiaoZip
             DWORD count = 0;
             if (!ReadFile(file, buffer.data(), static_cast<DWORD>(buffer.size()), &count, nullptr)) { ok = false; break; }
             if (!count) break;
+            if (count > bytesRemaining) { ok = false; break; }
+            bytesRemaining -= count;
             ok = BCryptHashData(hash, buffer.data(), count, 0) >= 0;
         }
         if (ok) ok = BCryptFinishHash(hash, digest, sizeof(digest), 0) >= 0;
@@ -53,11 +54,11 @@ namespace MiaoZip
         return result;
     }
 
-    inline std::wstring HashFile(const fs::path& path)
+    inline std::wstring HashFile(const fs::path& path, unsigned long long byteLimit = ~0ull)
     {
         Handle file(CreateFileW(path.c_str(), GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
             nullptr, OPEN_EXISTING, FILE_FLAG_SEQUENTIAL_SCAN, nullptr));
-        return file ? HashHandle(file.Value) : std::wstring();
+        return file ? HashHandle(file.Value, byteLimit) : std::wstring();
     }
 
     inline bool SafeEntry(const std::wstring& name)

@@ -15,7 +15,7 @@ void CPanel::StartMiaoZipEdit(UInt32 index, bool useEditor)
 {
     CDisableTimerProcessing timer0(g_App.Panels[0]);
     CDisableTimerProcessing timer1(g_App.Panels[1]);
-    const auto explain = [&](const wchar_t* reason)
+    const auto explain = [&](const std::wstring& reason)
     {
         std::wstring message(reason);
         message += L"\n\n可关闭“包内编辑”后使用普通预览。已建立的工作副本始终保留在“恢复文件”中。";
@@ -30,7 +30,7 @@ void CPanel::StartMiaoZipEdit(UInt32 index, bool useEditor)
     { explain(L"首版包内编辑仅支持本地可写的普通压缩包。"); return; }
     std::error_code sizeError;
     if (MiaoZip::fs::file_size(archivePath, sizeError) > MiaoZip::ArchiveLimit || sizeError)
-    { explain(L"此压缩包超过 256 MiB，自动回写已停用。"); return; }
+    { explain(L"压缩包超过 " + std::to_wstring(MiaoZip::ArchiveLimitMiB) + L" MiB，或无法读取大小，自动回写已停用。"); return; }
     CMyComPtr<IGetFolderArcProps> getter;
     CMyComPtr<IFolderArcProps> properties;
     _folder.QueryInterface(IID_IGetFolderArcProps, &getter);
@@ -57,7 +57,7 @@ void CPanel::StartMiaoZipEdit(UInt32 index, bool useEditor)
     UInt64 bytes = 0;
     _folder->GetProperty(index, kpidSize, &size);
     if (!ConvertPropVariantToUInt64(size, bytes) || bytes > MiaoZip::DocumentLimit)
-    { explain(L"此文档超过 20 MiB，或无法读取大小，暂不启用自动回写。"); return; }
+    { explain(L"此文档超过 " + std::to_wstring(MiaoZip::DocumentLimitMiB) + L" MiB，或无法读取大小，暂不启用自动回写。"); return; }
 
     const UString relative = GetItemRelPath(index);
     const std::wstring folderPrefix = _currentFolderPrefix.Ptr();
@@ -170,7 +170,8 @@ void CPanel::ProcessMiaoZipEdit()
                         thread.ItemIndex = index; thread.FullPath = commit.Snapshot.c_str(); thread.SafeContext = &context;
                         MiaoZip::Handle snapshot(::CreateFileW(commit.Snapshot.c_str(), GENERIC_READ, FILE_SHARE_READ,
                             nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr));
-                        if (!snapshot || MiaoZip::HashHandle(snapshot.Value) != commit.Hash) result = HRESULT_FROM_WIN32(ERROR_FILE_INVALID);
+                        if (!snapshot || MiaoZip::HashHandle(snapshot.Value, MiaoZip::DocumentLimit) != commit.Hash)
+                            result = HRESULT_FROM_WIN32(ERROR_FILE_INVALID);
                         else
                         {
                             result = thread.Create(L"MiaoZip · 保存文档", GetParent());

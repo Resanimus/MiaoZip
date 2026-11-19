@@ -104,26 +104,66 @@ namespace MiaoZip::Dialogs
         return palette.Chrome;
     }
 
-    // Rasterize only the rounded frame with subpixel coverage. Solid areas
-    // stay exact palette colors; GDI text retains its normal font rendering.
-    // No halftone stretch/dithering, graphics runtime or extra dependency.
-    inline void SmoothButtonFrame(HDC dc, RECT bounds, COLORREF background,
-        COLORREF fill, COLORREF border, int radius, int stroke)
+    enum class ChoiceMark { None, Check, Mixed, Dot };
+
+    struct RoundedMask
     {
-        if (bounds.right <= 0 || bounds.bottom <= 0) return;
-        const int width = bounds.right, height = bounds.bottom;
-        const float inset = 1.0f;
-        const float outerRadius = static_cast<float>((std::min)(radius, (height - 2) / 2));
-        const auto inside = [](float x, float y, float left, float top,
-            float right, float bottom, float corner)
+        float Left, Top, Right, Bottom, Radius;
+
+        bool Contains(float x, float y) const
         {
-            if (x < left || x >= right || y < top || y >= bottom) return false;
-            corner = (std::max)(0.0f, corner);
-            const float cx = (std::clamp)(x, left + corner, right - corner);
-            const float cy = (std::clamp)(y, top + corner, bottom - corner);
-            const float dx = x - cx, dy = y - cy;
-            return dx * dx + dy * dy <= corner * corner;
+            if (x < Left || x >= Right || y < Top || y >= Bottom) return false;
+            const float dx = x - (std::clamp)(x, Left + Radius, Right - Radius);
+            const float dy = y - (std::clamp)(y, Top + Radius, Bottom - Radius);
+            return dx * dx + dy * dy <= Radius * Radius;
+        }
+    };
+
+    // The mark coordinates are fractions of the checkbox or radio size.
+    inline bool InChoiceStroke(float x, float y, float ax, float ay, float bx, float by)
+    {
+        const float vx = bx - ax, vy = by - ay;
+        const float t = (std::clamp)(((x - ax) * vx + (y - ay) * vy) / (vx * vx + vy * vy), 0.0f, 1.0f);
+        const float dx = x - (ax + t * vx), dy = y - (ay + t * vy);
+        constexpr float strokeRadius = 0.064f;
+        return dx * dx + dy * dy <= strokeRadius * strokeRadius;
+    }
+
+    inline bool InChoiceMark(ChoiceMark mark, float x, float y)
+    {
+        switch (mark)
+        {
+        case ChoiceMark::Check:
+            return InChoiceStroke(x, y, 0.25f, 0.51f, 0.43f, 0.69f) ||
+                InChoiceStroke(x, y, 0.43f, 0.69f, 0.77f, 0.34f);
+        case ChoiceMark::Mixed:
+            return InChoiceStroke(x, y, 0.28f, 0.5f, 0.72f, 0.5f);
+        case ChoiceMark::Dot:
+            x -= 0.5f; y -= 0.5f;
+            return x * x + y * y <= 0.2f * 0.2f;
+        default:
+            return false;
+        }
+    }
+
+    // Paint the frame and its mark together so outlines and glyph edges never
+    // leave a layer of aliased pixels over the fill. The text still uses GDI.
+    inline void PaintRoundedControl(HDC dc, const RECT& bounds, COLORREF background,
+        COLORREF fill, COLORREF border, int radius, int stroke, int margin,
+        ChoiceMark mark = ChoiceMark::None, COLORREF ink = 0)
+    {
+        const int width = bounds.right - bounds.left;
+        const int height = bounds.bottom - bounds.top;
+        if (width <= 0 || height <= 0) return;
+        const auto mask = [&](int inset, int corner)
+        {
+            const float edge = static_cast<float>(inset);
+            const float maxRadius = (std::min)(width, height) * 0.5f - edge;
+            return RoundedMask{ edge, edge, width - edge, height - edge,
+                (std::max)(0.0f, (std::min)(static_cast<float>(corner), maxRadius)) };
         };
+        const auto outer = mask(margin, radius);
+        const auto inner = mask(margin + stroke, radius - stroke);
         std::vector<DWORD> pixels(static_cast<size_t>(width) * height);
         for (int y = 0; y < height; ++y)
         for (int x = 0; x < width; ++x)
@@ -134,9 +174,12 @@ namespace MiaoZip::Dialogs
             {
                 const float px = x + (sx + 0.5f) / 4, py = y + (sy + 0.5f) / 4;
                 COLORREF color = background;
-                if (inside(px, py, inset, inset, width - inset, height - inset, outerRadius))
-                    color = inside(px, py, inset + stroke, inset + stroke,
-                        width - inset - stroke, height - inset - stroke, outerRadius - stroke) ? fill : border;
+                if (outer.Contains(px, py))
+                {
+                    color = border;
+                    if (inner.Contains(px, py))
+                        color = InChoiceMark(mark, px / width, py / height) ? ink : fill;
+                }
                 red += GetRValue(color); green += GetGValue(color); blue += GetBValue(color);
             }
             pixels[static_cast<size_t>(y) * width + x] =
@@ -147,7 +190,7 @@ namespace MiaoZip::Dialogs
         info.bmiHeader.biWidth = width; info.bmiHeader.biHeight = -height;
         info.bmiHeader.biPlanes = 1; info.bmiHeader.biBitCount = 32;
         info.bmiHeader.biCompression = BI_RGB;
-        SetDIBitsToDevice(dc, 0, 0, width, height, 0, 0, 0, height,
+        SetDIBitsToDevice(dc, bounds.left, bounds.top, width, height, 0, 0, 0, height,
             pixels.data(), &info, DIB_RGB_COLORS);
     }
 
@@ -160,12 +203,14 @@ namespace MiaoZip::Dialogs
         const bool focus = GetFocus() == window;
         const auto bm = SendMessageW(window, BM_GETSTATE, 0, 0);
         const bool pressed = (bm & BST_PUSHED) != 0;
-        const bool checked = (SendMessageW(window, BM_GETCHECK, 0, 0) & 3) != BST_UNCHECKED;
+        const auto checkState = SendMessageW(window, BM_GETCHECK, 0, 0) & 3;
+        const bool checked = checkState != BST_UNCHECKED;
         RECT r{}; GetClientRect(window, &r);
         SetBkMode(dc, TRANSPARENT);
         auto font = reinterpret_cast<HFONT>(SendMessageW(window, WM_GETFONT, 0, 0));
         auto oldFont = SelectObject(dc, font ? font : GetStockObject(DEFAULT_GUI_FONT));
-        Theme::Fill(dc, r, ControlBackground(window));
+        const auto background = ControlBackground(window);
+        Theme::Fill(dc, r, background);
         SetTextColor(dc, enabled ? p.Text : p.Muted);
         auto text = Text(window);
         UINT format = DT_SINGLELINE | DT_VCENTER | DT_END_ELLIPSIS;
@@ -187,36 +232,22 @@ namespace MiaoZip::Dialogs
         {
             const int box = Theme::Scale(window, 16);
             const int inset = Theme::Scale(window, 1);
-            RECT mark{ inset, (r.bottom - box) / 2, inset + box, (r.bottom + box) / 2 };
+            const int top = (r.bottom - box) / 2;
+            const RECT mark{ inset, top, inset + box, top + box };
             const bool radio = type == BS_AUTORADIOBUTTON || type == BS_RADIOBUTTON;
             const auto fill = checked ? Design::AccentFill(Theme::IsDark()) :
                 (pressed ? Design::Pressed(Theme::IsDark()) : state.Hover ? p.Hover : Design::Field(Theme::IsDark()));
-            Theme::Rounded(dc, mark, enabled ? fill : p.Hover,
-                radio ? box : Theme::Scale(window, 6));
             const bool keyboardFocus = focus && !state.MouseFocus &&
                 !(SendMessageW(window, WM_QUERYUISTATE, 0, 0) & UISF_HIDEFOCUS);
-            Outline(dc, mark, focus ? p.Accent : checked ? fill : p.Muted,
-                radio ? box : Theme::Scale(window, 6), keyboardFocus ? Theme::Scale(window, 2) : 1);
+            auto glyph = ChoiceMark::None;
             if (checked)
-            {
-                const auto ink = enabled ? Design::AccentText(Theme::IsDark()) : p.Muted;
-                if (radio)
-                {
-                    InflateRect(&mark, -Theme::Scale(window, 5), -Theme::Scale(window, 5));
-                    Theme::Rounded(dc, mark, ink, box);
-                }
-                else if ((SendMessageW(window, BM_GETCHECK, 0, 0) & 3) == BST_INDETERMINATE)
-                    Line(dc, mark.left + box / 4, mark.top + box / 2,
-                        mark.right - box / 4, mark.top + box / 2, ink, Theme::Scale(window, 2));
-                else
-                {
-                    const int thick = (std::max<int>)(1, Theme::Scale(window, 2));
-                    Line(dc, mark.left + box / 4, mark.top + box / 2,
-                        mark.left + box * 7 / 16, mark.top + box * 11 / 16, ink, thick);
-                    Line(dc, mark.left + box * 7 / 16, mark.top + box * 11 / 16,
-                        mark.right - box / 5, mark.top + box / 3, ink, thick);
-                }
-            }
+                glyph = radio ? ChoiceMark::Dot :
+                    checkState == BST_INDETERMINATE ? ChoiceMark::Mixed : ChoiceMark::Check;
+            const auto ink = enabled ? Design::AccentText(Theme::IsDark()) : p.Muted;
+            const auto border = focus ? p.Accent : enabled && checked ? fill : p.Muted;
+            PaintRoundedControl(dc, mark, background, enabled ? fill : p.Hover, border,
+                radio ? box / 2 : Theme::Scale(window, 3),
+                keyboardFocus ? Theme::Scale(window, 2) : 1, 0, glyph, ink);
             r.left = mark.right + Theme::Scale(window, 9);
             DrawTextW(dc, text.c_str(), -1, &r, format);
 
@@ -226,9 +257,9 @@ namespace MiaoZip::Dialogs
             const bool primary = GetDlgCtrlID(window) == IDOK || type == BS_DEFPUSHBUTTON;
             const auto fill = !enabled ? p.Hover : pressed ? Design::Pressed(Theme::IsDark()) :
                 state.Hover ? p.Selected : primary ? Design::AccentFill(Theme::IsDark()) : Design::Field(Theme::IsDark());
-            SmoothButtonFrame(dc, r, ControlBackground(window), fill,
+            PaintRoundedControl(dc, r, background, fill,
                 focus ? p.Accent : primary ? fill : p.Line,
-                Theme::Scale(window, Design::ControlRadius), focus ? Theme::Scale(window, 2) : 1);
+                Theme::Scale(window, Design::ControlRadius), focus ? Theme::Scale(window, 2) : 1, 1);
             InflateRect(&r, -Theme::Scale(window, 1), -Theme::Scale(window, 1));
             SetTextColor(dc, !enabled ? p.Muted : primary && !pressed && !state.Hover
                 ? Design::AccentText(Theme::IsDark()) : p.Text);

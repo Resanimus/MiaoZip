@@ -11,6 +11,52 @@
 static void Require(bool value, const char* message)
 { if (!value) throw std::runtime_error(message); }
 
+static void CheckChoicePaint(HWND host, HDC dc, DWORD* pixels, DWORD type,
+    WPARAM nativeState)
+{
+    using namespace MiaoZip;
+    constexpr int width = 120, height = 36;
+    HWND control = CreateWindowExW(0, L"BUTTON", L"", WS_CHILD | type,
+        0, 0, width, height, host, nullptr, nullptr, nullptr);
+    Require(control != nullptr, "Cannot create native checkbox or radio");
+    Dialogs::AttachControl(control);
+    SendMessageW(control, BM_SETCHECK, nativeState, 0);
+    Require(SendMessageW(control, BM_GETCHECK, 0, 0) == static_cast<LRESULT>(nativeState),
+        "Styled choice loses its native state");
+    std::fill(pixels, pixels + width * height, 0x00ff00ff);
+    SendMessageW(control, WM_PRINTCLIENT, reinterpret_cast<WPARAM>(dc), PRF_CLIENT);
+    GdiFlush();
+    const auto background = Dialogs::ControlBackground(control);
+    const auto accent = Design::AccentFill(Theme::IsDark());
+    const auto ink = Design::AccentText(Theme::IsDark());
+    const int size = Theme::Scale(control, 16);
+    const int left = Theme::Scale(control, 1);
+    const int top = (height - size) / 2;
+    int blendedCorners = 0, blendedMark = 0, solidMark = 0;
+    for (int y = 0; y < height; ++y)
+    for (int x = 0; x < width; ++x)
+    {
+        const DWORD pixel = pixels[y * width + x];
+        const auto color = RGB((pixel >> 16) & 255, (pixel >> 8) & 255, pixel & 255);
+        if (x < left || x >= left + size || y < top || y >= top + size)
+        {
+            Require(color == background, "Choice control leaves native pixels outside the mark");
+            continue;
+        }
+        if (x >= left + size / 8 && x < left + size * 7 / 8 &&
+            y >= top + size / 4 && y < top + size * 3 / 4)
+        {
+            if (color == ink) ++solidMark;
+            else if (color != accent) ++blendedMark;
+        }
+        if (y - top < size / 4 && x - left < size / 4 &&
+            color != background && color != accent) ++blendedCorners;
+    }
+    DestroyWindow(control);
+    Require(blendedCorners > 0 && blendedMark > 0 && solidMark > 0,
+        "Native choice frame or glyph lacks a smooth, legible edge");
+}
+
 int wmain()
 {
     try
@@ -117,6 +163,9 @@ int wmain()
                 Require(blended > 0,"Rounded edge is not antialiased");
                 ++buttonPaints;
             }
+            CheckChoicePaint(componentHost, dc, static_cast<DWORD*>(memory), BS_AUTOCHECKBOX, BST_CHECKED);
+            CheckChoicePaint(componentHost, dc, static_cast<DWORD*>(memory), BS_AUTO3STATE, BST_INDETERMINATE);
+            CheckChoicePaint(componentHost, dc, static_cast<DWORD*>(memory), BS_AUTORADIOBUTTON, BST_CHECKED);
             SelectObject(dc,previous); DeleteObject(bitmap); DeleteDC(dc);
             DestroyWindow(button);
         }
@@ -161,7 +210,7 @@ int wmain()
         const auto dark=Design::Colors(true,false), light=Design::Colors(false,false);
         Require(dark.Chrome==RGB(22,26,33) && dark.Content==RGB(26,31,39),"Main dark palette changed");
         Require(light.Chrome==RGB(243,247,253) && light.Content==RGB(255,255,255),"Main light palette changed");
-        std::wcout << L"PASS: " << layouts << L" responsive/DPI layouts; " << buttonPaints << L" native button paint states; 8 native combo sizes; preserved controls and menu commands; extraction completion guards; isolated persistent preferences; main palette.\n";
+        std::wcout << L"PASS: " << layouts << L" responsive/DPI layouts; " << buttonPaints << L" native button paint states; 6 smoothed checkbox/radio marks; 8 native combo sizes; preserved controls and menu commands; extraction completion guards; isolated persistent preferences; main palette.\n";
         return 0;
     }
     catch (const std::exception& error)

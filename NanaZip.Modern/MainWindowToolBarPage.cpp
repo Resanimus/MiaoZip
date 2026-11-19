@@ -10,6 +10,7 @@
 
 #include "NanaZip.Modern.h"
 #include "GlassTheme.h"
+#include "../MiaoZip.Features/LiveEditLimits.h"
 #include "../MiaoZip.Features/MenuModel.h"
 #include <functional>
 #include "../NanaZip.DailyExperience/Interaction.h"
@@ -176,7 +177,10 @@ namespace winrt::NanaZip::Modern::implementation
             L"NanaZip.Modern/MainWindowToolBarPage/MainMenuLabel", L"Menu"));
         this->FilterTextBox().PlaceholderText(L"");
         winrt::AutomationProperties::SetName(this->EditModeButton(), L"包内编辑开关");
-        winrt::ToolTipService::SetToolTip(this->EditModeButton(), winrt::box_value(L"开启后双击小文档，保存后自动回写。支持 ZIP、非固实 7z；单文档 20 MiB。关闭开关暂停同步，恢复文件始终保留。"));
+        const auto editHint = L"开启后双击文档，保存后自动回写。支持 ZIP、非固实 7z。单文件上限 " +
+            std::to_wstring(MiaoZip::DocumentLimitMiB) + L" MiB，压缩包上限 " +
+            std::to_wstring(MiaoZip::ArchiveLimitMiB) + L" MiB。关闭开关暂停同步，恢复文件始终保留。";
+        winrt::ToolTipService::SetToolTip(this->EditModeButton(), winrt::box_value(winrt::hstring(editHint)));
         winrt::ToolTipService::SetToolTip(this->RecoveryButton(), winrt::box_value(L"打开持久工作副本、回写快照与原包备份"));
         winrt::ToolTipService::SetToolTip(this->FilterTextBox(), winrt::box_value(L"筛选文件名：Enter 应用，Esc 清空"));
         winrt::AutomationProperties::SetName(this->FilterTextBox(),
